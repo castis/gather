@@ -1,0 +1,17 @@
+FROM node:19
+
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends build-essential vim
+
+RUN mkdir /web /node_modules
+
+WORKDIR /web
+ENV PATH /node_modules/.bin:$PATH
+
+COPY package.json yarn.lock ./
+RUN yarn install --modules-folder=/node_modules
+RUN npx update-browserslist-db@latest
+
+COPY ./src ./src
+
+CMD ["yarn", "parcel"]

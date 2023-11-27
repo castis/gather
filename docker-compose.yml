@@ -1,0 +1,72 @@
+version: "3.7"
+
+services:
+  web:
+    build:
+      context: ./web
+      dockerfile: ./dockerfile
+    environment:
+      - MODE=${MODE:-development}
+    ports:
+      - 1234:1234
+    volumes:
+      - ./web:/web
+    stdin_open: true
+    tty: true
+    command: ["yarn", "parcel"]
+
+  api:
+    image: 634573534101.dkr.ecr.us-east-1.amazonaws.com/yayhooray:latest
+    build:
+      context: ./api
+      dockerfile: ./dockerfile
+    ports:
+      - 5000:5000
+    environment:
+      - FLASK_DEBUG=1
+      - FLASK_RUN_HOST=0.0.0.0
+      - URL=http://localhost:1234
+      - DATABASE_URI=postgresql://yay:hooray@postgres:5432/yayhooray
+      - REDIS_URI=redis://redis:6379
+    volumes:
+      - ./api:/api
+      - ~/.aws:/home/pinkie/.aws
+      - avatars:/static/avatars
+      - images:/static/images
+    links:
+      - postgres
+      - redis
+    stdin_open: true
+    tty: true
+    command: ["pipenv", "run", "flask", "run"]
+
+  postgres:
+    image: timescale/timescaledb:latest-pg15
+    restart: unless-stopped
+    ports:
+      - 5432:5432
+    environment:
+      - POSTGRES_USER=yay
+      - POSTGRES_PASSWORD=hooray
+      - POSTGRES_DB=yayhooray
+      - PGDATA=/var/lib/postgresql/data/pgdata
+    volumes:
+      - postgres:/var/lib/postgresql/data
+      - ./dev/:/root/dev
+    command: postgres -c shared_preload_libraries=timescaledb
+
+  redis:
+    image: redis:7
+    restart: unless-stopped
+    ports:
+      - 6379:6379
+    volumes:
+      - redis:/var/lib/redis
+    environment:
+      - REDIS_REPLICATION_MODE=master
+
+volumes:
+  postgres:
+  redis:
+  images:
+  avatars:

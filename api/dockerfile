@@ -1,0 +1,35 @@
+FROM python:3.11
+
+ENV PYTHONUNBUFFERED=1 \
+    VIRTUAL_ENV_DISABLE_PROMPT=1 \
+    PIPENV_VERBOSITY=-1 \
+    WORKON_HOME=/home/pinkie/.venv \
+    FLASK_APP=gather/app.py
+
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends vim gcc
+
+RUN pip install -U pip pipenv
+
+WORKDIR /api
+RUN useradd -m -r pinkie \
+    && chown pinkie /api
+
+RUN mkdir -p /static/avatars \
+    && mkdir -p /static/images \
+    && chown -R pinkie /static/*
+
+USER pinkie
+
+COPY Pipfile Pipfile.lock ./
+RUN pipenv install --deploy --ignore-pipfile
+
+COPY --chown=pinkie:pinkie . .
+
+RUN echo ". $(pipenv --venv)/bin/activate" >> /home/pinkie/.bashrc
+
+EXPOSE 5000
+CMD ["pipenv", "run", "gunicorn", "-b :5000", "gather.app:app"]
+
+HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
+    CMD curl -f http://localhost:5000/health || exit 1

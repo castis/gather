@@ -1,0 +1,8 @@
+/api/.env
+/api/static/*
+/web/node_modules
+/web/.parcel-cache
+/web/dist
+.pytest_cache
+__pycache__
+/dev/*

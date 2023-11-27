@@ -1,0 +1,5 @@
+{
+  "/static": {
+    "target": "http://api:5000"
+  }
+}

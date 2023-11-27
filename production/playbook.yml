@@ -1,0 +1,176 @@
+# ANSIBLE_CONFIG=./ansible.cfg ansible-playbook playbook.yml
+---
+- hosts: yayhooray
+  tasks:
+    - hostname:
+        name: "{{ inventory_hostname }}"
+
+    # - name: github deploy key
+    #   command : ssh-keygen -q -t ecdsa -f /root/.ssh/yh_ecdsa -N ""
+    #   args:
+    #     creates: /root/.ssh/yh_ecdsa
+    # - name: ssh config
+    #   copy:
+    #     src: ./ssh/config
+    #     dest: /root/.ssh/config
+    #     owner: root
+    #     group: root
+    #     mode: 0644
+
+    - name: disable root login with password
+      lineinfile:
+        path: /etc/ssh/sshd_config
+        regexp: ^#?(PermitRootLogin)
+        line: \1 prohibit-password
+        backrefs: yes
+        validate: sshd -t -f %s
+      notify: ssh
+
+    - name: all the things
+      apt:
+        name:
+          - ufw
+          - rsync
+          - gnupg2
+          - python3
+          - postgresql
+          - ca-certificates
+          - build-essential
+          - debian-keyring
+          - debian-archive-keyring
+          - apt-transport-https
+          - tmux
+
+          # for pyenv
+          - zlib1g-dev
+          - libffi-dev
+          - libssl-dev
+          - libbz2-dev
+          - libreadline-dev
+          - libsqlite3-dev
+          - liblzma-dev
+        state: present
+      tags: deps
+
+    - ufw:
+        rule: allow
+        port: "{{ item }}"
+        proto: tcp
+      with_items:
+        - 22
+        - 80
+        - 443
+    - ufw:
+        state: enabled
+
+    - name: add redis apt key
+      apt_key:
+        url: https://packages.redis.io/gpg
+        state: present
+      tags: redis
+    - name: add redis repository
+      apt_repository:
+        repo: deb https://packages.redis.io/deb {{ ansible_lsb.codename }} main
+        state: present
+        update_cache: yes
+      tags: redis
+    - name: install redis
+      apt:
+        name: redis
+        state: present
+      notify: redis
+      tags: redis
+
+    - name: caddy apt key
+      apt_key:
+        url: "https://dl.cloudsmith.io/public/caddy/stable/gpg.key"
+        id: 65760C51EDEA2017CEA2CA15155B6D79CA56EA34
+        state: present
+      register: add_repository_key
+      ignore_errors: true
+      tags: caddy
+    - name: caddy repo
+      apt_repository:
+        repo: "deb https://dl.cloudsmith.io/public/caddy/stable/deb/debian any-version main"
+        state: present
+        update_cache: true
+      tags: caddy
+    - name: install caddy
+      apt:
+        name: caddy
+        update_cache: yes
+      tags: caddy
+    - name: configure caddy
+      copy:
+        src: ./caddy/Caddyfile
+        dest: /etc/caddy/Caddyfile
+        owner: root
+        group: root
+        mode: 0644
+      notify:
+        - caddy
+      tags: caddy
+
+  # - name: edit .bashrc
+  #   lineinfile:
+  #     path: /root/.bashrc
+  #     line: source /opt/yayhooray/api/yh.sh
+
+  - name: ensure env files exist
+    copy:
+      content: ""
+      dest: /root/yay.env
+      force: no
+      group: root
+      owner: root
+      mode: 0644
+  - name: user for running yh
+    user:
+      name: pinkie
+      state: present
+      create_home: no
+      password_lock: yes
+  # - name: install systemd services
+  #   copy:
+  #     src: "./systemd/{{ item }}"
+  #     dest: "/etc/systemd/system/{{ item }}"
+  #     owner: root
+  #     group: root
+  #     mode: 0644
+  #   with_items:
+  #     - yayapi.service
+  #     - yayweb.service
+  #   notify:
+  #     - yayapi
+  #     - yayweb
+
+  handlers:
+    - name: ssh
+      systemd:
+        name: sshd
+        enabled: yes
+        state: restarted
+
+    - name: postgres
+      systemd:
+        name: postgresql
+        enabled: yes
+        state: restarted
+
+    - name: redis
+      systemd:
+        name: redis-server
+        enabled: yes
+        state: restarted
+
+    - name: yayapi
+      systemd:
+        name: yayapi
+        enabled: yes
+        state: restarted
+
+    - name: caddy
+      systemd:
+        name: caddy
+        enabled: yes
+        state: restarted

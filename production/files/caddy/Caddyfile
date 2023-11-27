@@ -1,0 +1,22 @@
+duckbo.at {
+        root * /opt/yayhooray/web
+        try_files {path} /index.html
+        file_server
+
+        log {
+                output file /var/log/caddy/web.log
+        }
+}
+
+api.duckbo.at {
+        reverse_proxy 127.0.0.1:5000
+
+        log {
+                output file /var/log/caddy/api.log
+        }
+}
+
+avatars.duckbo.at {
+        root * /opt/yayhooray/avatars
+        file_server
+}
