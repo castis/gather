@@ -1,5 +1,5 @@
-import { camelCase, startCase } from "lodash";
 import React, { useCallback, useEffect, useState } from "react";
+import { camelCase, startCase } from "lodash";
 import { useParams } from "react-router";
 import { Link, useNavigate } from "react-router-dom";
 import { atom, useRecoilState, useRecoilValue } from "recoil";
@@ -9,7 +9,7 @@ import { api } from "../api";
 import { replyTextState, userState } from "../atoms";
 import Pagination from "../components/pagination";
 import { Reply } from "../components/reply";
-import { Content, Skeleton, Stage, Title } from "../components/stage";
+import { Content, Error, Skeleton, Stage, Title } from "../components/stage";
 import { pinkies } from "../components/texteditor";
 import { avatarLocation } from "../config";
 import { loadDatetime, useSingleErrorHandler } from "../utils";
@@ -23,12 +23,10 @@ const threadState = atom({
 
 const Thread = () => {
   const params = useParams();
-  const user = useRecoilValue(userState);
   const [thread, setThread] = useRecoilState(threadState);
   const [comments, setComments] = useState([]);
-
   const [working, setWorking] = useState(true);
-  const [error, setError] = useState();
+  const [error, setError, handleApiError] = useSingleErrorHandler();
 
   const navigate = useNavigate();
 
@@ -50,8 +48,8 @@ const Thread = () => {
     api
       .get(`/threads/detail`, { params: { slug, page } })
       .then(setThreadInfo)
-      .catch(useSingleErrorHandler)
-      // .finally(() => setWorking(false));
+      .catch(handleApiError)
+      .finally(() => setWorking(false));
   }, []);
 
   const onUpdateData = useCallback(({ data }) => {
@@ -62,9 +60,9 @@ const Thread = () => {
     }
   });
 
-  // if (error) {
-  //   return error;
-  // }
+  if (error) {
+    return <Error message={error} />;
+  }
 
   if (working) {
     return <Skeleton />;
@@ -75,12 +73,13 @@ const Thread = () => {
       items={comments}
       plural="comments"
       path={`/thread/${slug}`}
+      cta={<Admin />}
     >
       in <Link to="/">Threads</Link> &gt;{" "}
       <Link to={`/category/${thread.category}`}>
         {startCase(camelCase(thread.category))}
-      </Link> &gt;{" "}
-      <Link to={`/thread/${thread.slug}`}>{thread.title}</Link>
+      </Link>{" "}
+      &gt; <Link to={`/thread/${thread.slug}`}>{thread.title}</Link>
     </Pagination>
   );
 
@@ -91,12 +90,7 @@ const Thread = () => {
         {paging}
         <div className="comments">
           {comments?.items?.map((comment, i) => (
-            <Comment
-              key={i}
-              thread={thread}
-              comment={comment}
-              showAdmin={thread.author?.id === user.id}
-            />
+            <Comment key={i} thread={thread} comment={comment} />
           ))}
         </div>
         {paging}
@@ -107,6 +101,31 @@ const Thread = () => {
 };
 
 const StyledThread = styled(Content)`
+  .admin {
+    margin-left: auto;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    list-style: none;
+    gap: 10px;
+
+    li {
+      color: #494949;
+      background-color: #e6f7fe;
+      padding: 4px;
+      text-transform: uppercase;
+      text-align: center;
+      font-size: 9px;
+      margin-left: auto;
+      cursor: pointer;
+  
+      &:hover {
+        background-color: #494949;
+        color: #e6f7fe;
+      }
+    }
+  }
+
   .reply-form {
     margin-top: 15px;
   }
@@ -115,7 +134,7 @@ const StyledThread = styled(Content)`
 const mediaDetectors = Object.entries({
   youtube: new RegExp(
     '(?:")?http(?:s)?://(?:www.)?youtu(?:be)?.(?:[a-z]){2,3}' +
-    "(?:[a-z/?=]+)([a-zA-Z0-9-_]{11})(?:[a-z0-9?&-_=]+)?"
+      "(?:[a-z/?=]+)([a-zA-Z0-9-_]{11})(?:[a-z0-9?&-_=]+)?"
   ),
   // vimeo: new RegExp(
   //   "http(?:s)?://(?:www.)?vimeo.com/([0-9]+)(?:#[a-z0-9?&-_=]*)?"
@@ -135,9 +154,12 @@ const embed = {
   // },
 };
 
-const pinkieDetector = new RegExp(Object.keys(pinkies)
-  .map((string) => string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'))
-  .join('|'), 'g');
+const pinkieDetector = new RegExp(
+  Object.keys(pinkies)
+    .map((string) => string.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"))
+    .join("|"),
+  "g"
+);
 
 const mediaReducer = (acc, [name, test]) => {
   const matches = test.exec(acc);
@@ -155,7 +177,11 @@ const render = (text) => {
     // format newlines
     .replace(/\r?\n|\r/g, "<br />\n")
     // format pinkies
-    .replace(pinkieDetector, (match) => `<img class="pinkie" src="${pinkies[match]}" title="${match}" />`);
+    .replace(
+      pinkieDetector,
+      (match) =>
+        `<img class="pinkie" src="${pinkies[match]}" title="${match}" />`
+    );
 
   [...fragment.getElementsByTagName("blockquote")].forEach((item) => {
     const user = item.getAttribute("title");
@@ -172,7 +198,6 @@ const render = (text) => {
 
 const Admin = () => {
   const [thread, setThread] = useRecoilState(threadState);
-  const navigate = useNavigate();
 
   const changeSetting = useCallback((settings) => {
     api
@@ -188,23 +213,18 @@ const Admin = () => {
   const toggleEnabled = () => changeSetting({ enabled: !thread.enabled });
 
   return (
-    <div className="admin">
-      <h5>Thread Admin</h5>
-      <ul>
-        <li onClick={toggleNaughty}>{thread.nsfw ? "Unm" : "M"}ark Naughty</li>
-        <li onClick={toggleEnabled}>
-          {thread.enabled ? "Close" : "Open"} Thread
-        </li>
-      </ul>
-    </div>
+    <ul className="admin">
+      <li className="cta" onClick={toggleNaughty}>
+        {thread.nsfw ? "Unm" : "M"}ark Naughty
+      </li>
+      <li className="cta" onClick={toggleEnabled}>
+        {thread.enabled ? "Close" : "Open"} Thread
+      </li>
+    </ul>
   );
 };
 
-export const Comment = ({
-  comment,
-  showAdmin = false,
-  contentOnly = false,
-}) => {
+export const Comment = ({ comment, contentOnly = false }) => {
   const user = useRecoilValue(userState);
   const [replyText, setReplyText] = useRecoilState(replyTextState);
   const [selection, setSelection] = useState("");
@@ -221,8 +241,9 @@ export const Comment = ({
   const quote = useCallback(() => {
     setReplyText(
       replyText +
-      `<blockquote title="${author.name}">${selection.length ? selection : comment.content
-      }</blockquote>`
+        `<blockquote title="${author.name}">${
+          selection.length ? selection : comment.content
+        }</blockquote>`
     );
     setSelection("");
   });
@@ -254,9 +275,9 @@ export const Comment = ({
   }
 
   if (contentOnly) {
-    return <StyledComment className="comment content-only">
-      {content}
-    </StyledComment>;
+    return (
+      <StyledComment className="comment content-only">{content}</StyledComment>
+    );
   }
 
   return (
@@ -265,7 +286,6 @@ export const Comment = ({
         <a onClick={toggleSource}>view source</a>
         <a onClick={quote}>quote</a>
       </div>
-      {showAdmin && <Admin />}
       <div className="info">
         <Link className="name" to={`/user/${author.slug}`}>
           {author.name}
@@ -275,19 +295,11 @@ export const Comment = ({
         </div>
         <div className="menu">
           <div className="icon">
-            {author.avatar && (
-              <img
-                src={`${avatarLocation}/${author.avatar}`}
-                height="16"
-                width="16"
-              />
-            ) || (
-              <img
-                src={p05}
-                height="16"
-                width="16"
-              />
-            )}
+            <img
+              src={author.avatar ? `${avatarLocation}/${author.avatar}` : p05}
+              height="16"
+              width="16"
+            />
           </div>
           <div className="items">
             <Link to={`/user/${author.slug}`}>BUDDY? IGNORE?</Link>
@@ -363,43 +375,6 @@ const StyledComment = styled.div`
     .when {
       font-size: 10px;
       color: #888;
-    }
-  }
-
-  .admin {
-    // grid-column: 1;
-    // grid-row: 2;
-    margin-top: 16px;
-    margin-right: auto;
-
-    background: #f4f4f4;
-    border: 1px dotted #8a8a8a;
-    padding: 5px 10px 5px 5px;
-    margin-bottom: auto;
-
-    font-size: 9px;
-
-    h5 {
-      margin: 0;
-      font-weight: 500;
-      font-size: 9px;
-      text-transform: uppercase;
-    }
-
-    ul {
-      margin: 0;
-      padding: 0 0 0 10px;
-
-      li {
-        margin: 3px 0;
-        color: #ed135a;
-        cursor: pointer;
-
-        &:hover {
-          color: #fff;
-          background: #ed135a;
-        }
-      }
     }
   }
 

@@ -1,11 +1,9 @@
-import React, { useCallback, useState, useRef } from "react";
+import React, { useCallback, useRef, useState } from "react";
 import { useRecoilState } from "recoil";
 
 import { api } from "../api";
-import { Stage, Title, Content, Skeleton } from "../components/stage";
 import { userState } from "../atoms";
-
-
+import { Content, Skeleton, Stage, Title } from "../components/stage";
 import { useErrorHandler } from "../utils";
 
 export default () => {
@@ -234,6 +232,7 @@ export default () => {
           <div className="field">
             <label htmlFor="avatar">Avatar</label>
             <input id="avatar" type="file" name="avatar" accept="image/*" />
+            {errors?.avatar && <div className="error">{errors.avatar}</div>}
           </div>
         </form>
       </Content>

@@ -1,5 +1,3 @@
-import axios from "axios";
-
 export const location = process.env.MODE || "development";
 
 const apiLocations = {

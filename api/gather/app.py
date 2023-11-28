@@ -36,11 +36,11 @@ def create_app(**kwargs):
     app.register_blueprint(commands)
 
     if app.config["MODE"] == "development":
-        # .proxyrc.json only forwards correctly to api
-        # if project is run with `docker-compose up`
-        app.wsgi_app = WhiteNoise(app.wsgi_app)
-        mount_static_dir(app, app.config["AVATARS_LOCATION"], "/static/avatars")
-        mount_static_dir(app, app.config["IMAGES_LOCATION"], "/static/images")
+        app.wsgi_app = WhiteNoise(
+            app.wsgi_app,
+            root="/static/avatars",
+            prefix="/static/avatars",
+        )
 
     @app.errorhandler(404)
     def not_found(error):

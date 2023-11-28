@@ -1,15 +1,15 @@
 import classnames from "classnames";
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { useParams } from "react-router";
 import { Link, Outlet } from "react-router-dom";
-import { useRecoilValue, useSetRecoilState } from "recoil";
+import { useRecoilValue } from "recoil";
 import styled from "styled-components";
 
 import { api } from "../api";
-import { errorState, globalKeyState, userState } from "../atoms";
+import { globalKeyState, userState } from "../atoms";
 import Pagination from "../components/pagination";
 import { Content, Skeleton, Stage, Title } from "../components/stage";
-import { loadDatetime } from "../utils";
+import { loadDatetime, useSingleErrorHandler } from "../utils";
 
 import addIcon from "url:/src/images/chrome/b-add.gif";
 import hideIcon from "url:/src/images/chrome/hide-thread.gif";
@@ -23,13 +23,23 @@ const initialTitleState = {
 const Titlematic = ({ titleState }) => {
   const [title, setTitle] = titleState;
   const [editing, setEditing] = useState(false);
-  const [error, setError] = useState();
+  const [error, setError, handleApiError] = useSingleErrorHandler();
+  const user = useRecoilValue(userState);
 
-  const start = useCallback(() => setEditing(true));
+  const start = useCallback(() => {
+    if (user?.privileged) setEditing(true);
+  });
   const cancel = useCallback(() => {
     setError(undefined);
     setEditing(false);
   });
+
+  const altText = useMemo(() => {
+    if (title?.author?.name) {
+      const when = loadDatetime(title.created_at).toRelative();
+      return `${title.author.name}, ${when}`;
+    }
+  }, [title]);
 
   const save = useCallback((e) => {
     e.preventDefault();
@@ -40,13 +50,7 @@ const Titlematic = ({ titleState }) => {
         setTitle(data);
         setEditing(false);
       })
-      .catch(({ response }) => {
-        if (response?.status == 429) {
-          setError(response.data);
-        } else {
-          setError("Uhh.");
-        }
-      });
+      .catch(handleApiError);
   });
 
   if (editing) {
@@ -62,14 +66,14 @@ const Titlematic = ({ titleState }) => {
           />
           <button type="submit">Save</button>
           <button onClick={cancel}>Cancel</button>
-          {error && <div className="error">{error}</div>}
+          {error?.title && <div className="error">{error.title}</div>}
         </form>
       </Title>
     );
   }
 
   return (
-    <Title onClick={start} title={title?.author?.name}>
+    <Title onClick={start} title={altText}>
       {title.text}
     </Title>
   );
@@ -96,13 +100,14 @@ const paramsToURL = (params, exclude = []) => {
 
 const Threads = () => {
   const params = useParams();
+  const user = useRecoilValue(userState);
+  const globalKey = useRecoilValue(globalKeyState);
+  const [error, setError] = useState();
 
-  const [threads, setThreads] = useState();
   const titleState = useState(initialTitleState);
   const [title, setTitle] = titleState;
-  const user = useRecoilValue(userState);
-  const setError = useSetRecoilState(errorState);
-  const globalKey = useRecoilValue(globalKeyState);
+  const [threads, setThreads] = useState();
+
   const { page, type, identifier, query, filter, sort: rawsort } = params;
 
   const [working, setWorking] = useState(true);
@@ -270,10 +275,7 @@ const Threads = () => {
                     </div>
                   </div>
                   <div className="last_post">
-                    <Link
-                      className="name"
-                      to={`/user/${last_author.slug}`}
-                    >
+                    <Link className="name" to={`/user/${last_author.slug}`}>
                       {last_author.name}
                     </Link>
                     <div className="meta" title={updated_at}>

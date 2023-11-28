@@ -2,7 +2,7 @@ from math import ceil
 
 import html5lib
 from flask import Blueprint
-from flask_jwt_extended import jwt_required, current_user
+from flask_jwt_extended import current_user, jwt_required
 from gather.models import Comment, Thread, ThreadCategories, Title, User, db
 from gather.routes import limiter
 from gather.schemas import (
@@ -11,7 +11,7 @@ from gather.schemas import (
     threads_schema,
     title_schema,
 )
-from marshmallow import validate
+from marshmallow import Schema, fields, post_load, validate
 from webargs import ValidationError, fields
 from webargs.flaskparser import use_kwargs
 
@@ -148,14 +148,20 @@ def threads_list(
     return response, 200
 
 
+class TitleChangeRequest(Schema):
+    text = fields.Str(required=True)
+
+    @post_load
+    def validate_title(self, data, **kwargs):
+        if not current_user.privileged:
+            raise ValidationError({"title": "No"})
+        return data
+
+
 @api.route("title", methods=["POST"])
 @limiter.limit("2 per minute")
 @jwt_required()
-@use_kwargs(
-    {
-        "text": fields.Str(required=True),
-    },
-)
+@use_kwargs(TitleChangeRequest())
 def set_title(text):
     title = Title(
         text=text,

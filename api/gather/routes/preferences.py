@@ -19,16 +19,11 @@ api = Blueprint("preferences", __name__, url_prefix=f"/preferences")
 
 
 allowed_mimes = {
-    "image/jpeg": "jpg",
+    # "image/jpeg": "jpg",
     "image/gif": "gif",
-    "image/png": "png",
+    # "image/png": "png",
 }
 allowed_keys = list(allowed_mimes.keys())
-
-
-def validate_avatar(file):
-    if file and file.mimetype not in allowed_keys:
-        raise ValidationError("jpg, gif, or png please.")
 
 
 class PreferencesUpdateSchema(Schema):
@@ -119,9 +114,25 @@ class PreferencesUpdateSchema(Schema):
 
 
 class UserAvatarUpdateSchema(Schema):
-    avatar = fields.Field(
-        validate=validate_avatar,
-    )
+    avatar = fields.Field(required=False)
+
+    @post_load
+    def validate_avatar(self, data, **kwargs):
+        avatar = data.get("avatar")
+
+        if not avatar:
+            return data
+
+        if avatar.mimetype not in allowed_keys:
+            raise ValidationError({"avatar": "gif only"})
+
+        if (file_size := avatar.seek(0, 2)):
+            if file_size > 5 * 1024:
+                raise ValidationError({"avatar": "file size too large"})
+        else:
+            raise ValidationError({"avatar": "unable to determine file size"})
+
+        return data
 
 
 @api.route("", methods=["POST"])
@@ -150,6 +161,7 @@ def update_preferences(**prefs):
         ext := allowed_mimes.get(avatar.mimetype)
     ):
         filename = f"{user.id}.{ext}"
+
         if MODE == "production":
             boto3.client("s3").upload_fileobj(
                 avatar,
@@ -157,7 +169,8 @@ def update_preferences(**prefs):
                 filename,
             )
         else:
-            avatar.save(os.path.join(AVATARS_LOCATION, filename))
+            avatar.save(f"/static/avatars/{filename}")
+
         user.avatar = filename
 
     if email := prefs.get("email"):

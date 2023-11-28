@@ -5,11 +5,6 @@ export const workingState = atom({
   default: false,
 });
 
-export const errorState = atom({
-  key: "error",
-  default: "",
-});
-
 export const replyTextState = atom({
   key: "replyText",
   default: "",
@@ -27,6 +22,7 @@ export const initialUser = {
   icon: null,
   theme: "light",
   random_titles: false,
+  privileged: false,
 };
 
 export const buddiesState = atom({

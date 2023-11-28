@@ -33,86 +33,14 @@ import Buddies from "./app/pages/buddies";
 import { Inbox, Sent } from "./app/pages/messages/inbox";
 import ComposeMessage from "./app/pages/messages/compose";
 
-import { userState, errorState } from "./app/atoms";
+import { userState } from "./app/atoms";
 import { NotFound } from "./app/components/stage";
-
-// const LimitView = styled.div`
-//   color: #002699;
-//   padding: 10px;
-//   display: flex;
-//   align-items: center;
-//   justify-content: center;
-//   background: #99ccff;
-//   border-bottom: solid 1px blue;
-// `;
-
-export const Error = () => {
-  const [error, setError] = useRecoilState(errorState);
-  const [open, setOpen] = useState(true);
-
-  useEffect(() => {
-    // const requestInterceptor = axios.interceptors.request.use(
-    //   (config) => config,
-    //   (error) => Promise.reject(error)
-    // );
-
-    const responseInterceptor = axios.interceptors.response.use(
-      (r) => r,
-      (error) => {
-        if (error.response && error.response.status) {
-          console.log(error.message);
-        }
-        return Promise.reject(error);
-      }
-    );
-
-    return () => {
-      // axios.interceptors.request.eject(requestInterceptor);
-      axios.interceptors.response.eject(responseInterceptor);
-    };
-  });
-
-  const toggle = () => setOpen(!open);
-
-  return (
-    <InterceptorView className={open > 0 ? "open" : ""} onClick={toggle}>
-      {error && <ErrorView>{error}</ErrorView>}
-    </InterceptorView>
-  );
-};
-
-const InterceptorView = styled.div`
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  width: 100%;
-  height: 40px;
-  background: red;
-  transition: all 0.125s ease-in-out;
-  color: white;
-
-  // &.open {
-  //   max-height: 300px;
-  // }
-`;
-
-const ErrorView = styled.div`
-  color: #cc0000;
-  padding: 10px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: #fcc;
-  border-bottom: solid 1px red;
-`;
 
 const App = () => {
   const { theme: name } = useRecoilValue(userState);
   return (
     <ThemeProvider theme={{ name }}>
       <StyledContainer>
-        {/* <Error /> */}
         <Toolbar />
         <Routes>
           {/* <Route path="/statistics" element={<Statistics />} /> */}

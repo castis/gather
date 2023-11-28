@@ -222,7 +222,6 @@ export const NotFound = () => (
 
 
 export const Error = ({ message }) => {
-  console.log(message)
   return (
     <StyledSkeleton>
       <Title>

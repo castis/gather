@@ -1,5 +1,4 @@
-from cachetools.func import ttl_cache
-from flask import Blueprint, g
+from flask import Blueprint
 from flask_jwt_extended import jwt_required, current_user
 from gather.models import Applicant, ApplicationVote, VoteType, db
 from gather.schemas import applicant_schema
