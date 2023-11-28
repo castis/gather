@@ -196,13 +196,12 @@ def buddies_count(user_id):
 
 
 @api.route("ping", methods=["POST"])
-@jwt_required()
+@jwt_required(optional=True)
 def ping():
-    if current_user.banned is True:
-        return {
-            "banned": True,
-            "reason": current_user.banned_reason,
-        }, 403
+    if not current_user or current_user.banned:
+        response = jsonify()
+        unset_jwt_cookies(response)
+        return response, 401 if not current_user else 403
 
     return {
         "user": me_schema.dump(current_user),

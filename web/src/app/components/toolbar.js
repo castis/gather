@@ -29,15 +29,14 @@ const Toolbar = () => {
         setBuddies(data?.buddies || []);
       })
       .catch(({ response }) => {
-        resetState();
+        if (response?.status >= 400 && response?.status < 500) {
+          resetState();
+        }
       })
       .finally(() => setLoading(false));
   }, []);
 
-  const resetState = useCallback(() => {
-    setUser({ ...initialUser });
-    localStorage.clear();
-  }, []);
+  const resetState = useCallback(() => setUser({ ...initialUser }), []);
 
   useEffect(updateMe, [globalKey]);
 

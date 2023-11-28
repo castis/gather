@@ -24,9 +24,11 @@ const threadState = atom({
 const Thread = () => {
   const params = useParams();
   const [thread, setThread] = useRecoilState(threadState);
+  const [resetKey, setResetKey] = useState();
   const [comments, setComments] = useState([]);
   const [working, setWorking] = useState(true);
   const [error, setError, handleApiError] = useSingleErrorHandler();
+  const [newComments, setNewComments] = useState(4);
 
   const navigate = useNavigate();
 
@@ -39,7 +41,37 @@ const Thread = () => {
       ...data.comments,
       perPage: data.comments.per_page,
     });
+    setNewComments(0);
   });
+
+  // new post notifier
+  useEffect(() => {
+    let shouldContinue = true;
+    let interval = setInterval(() => {
+      if (!shouldContinue) {
+        clearInterval(interval);
+        return;
+      }
+
+      api
+        .get(`/threads/ping`, { params: { slug } })
+        .then(({ data }) =>
+          setNewComments(data.comments.total - comments.total)
+        )
+        .catch((error) => {
+          console.error(error);
+          // if we get rate limited, stop doing this
+          if (error.response && error.response.status === 429) {
+            shouldContinue = false;
+          }
+        });
+    }, 5000);
+
+    return () => {
+      clearInterval(interval);
+      shouldContinue = false;
+    };
+  }, [comments]);
 
   useEffect(() => {
     setWorking(true);
@@ -50,7 +82,7 @@ const Thread = () => {
       .then(setThreadInfo)
       .catch(handleApiError)
       .finally(() => setWorking(false));
-  }, []);
+  }, [resetKey]);
 
   const onUpdateData = useCallback(({ data }) => {
     if (data.comments.page != page) {
@@ -59,6 +91,8 @@ const Thread = () => {
       setThreadInfo({ data });
     }
   });
+
+  const reloadThread = useCallback(() => setResetKey(Date.now()));
 
   if (error) {
     return <Error message={error} />;
@@ -95,6 +129,11 @@ const Thread = () => {
         </div>
         {paging}
         <Reply thread={thread} onUpdateData={onUpdateData} />
+        {newComments > 0 && (
+          <div className="new-comments" onClick={reloadThread}>
+            {newComments} new comment{newComments > 1 ? "s" : ""}
+          </div>
+        )}
       </StyledThread>
     </Stage>
   );
@@ -118,7 +157,7 @@ const StyledThread = styled(Content)`
       font-size: 9px;
       margin-left: auto;
       cursor: pointer;
-  
+
       &:hover {
         background-color: #494949;
         color: #e6f7fe;
@@ -128,6 +167,23 @@ const StyledThread = styled(Content)`
 
   .reply-form {
     margin-top: 15px;
+  }
+
+  .new-comments {
+    position: fixed;
+    left: 25px;
+    bottom: 25px;
+    background: #ff9898;
+    padding: 10px;
+    width: 200px;
+
+    cursor: pointer;
+    font-size: 12px;
+    color: #FFF;
+
+    &:hover {
+      background: #ffaeae;
+    }
   }
 `;
 

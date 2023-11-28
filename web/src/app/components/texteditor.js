@@ -154,6 +154,7 @@ export const TextEditor = ({ working, className }) => {
             ref={textareaRef}
             onChange={handleTextarea}
             value={text}
+            disabled={working}
           />
           <img src={benice} title="OR ELSE" />
         </div>

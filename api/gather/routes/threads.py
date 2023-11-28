@@ -7,7 +7,7 @@ from gather.bot import post_comment_hook
 from gather.models import Comment, Thread, ThreadCategories, Title, User, db
 from gather.routes import limiter
 from gather.schemas import comments_schema, thread_schema, threads_schema, title_schema
-from gather.utils import encode_emojis
+from gather.utils import encode_emojis, cache
 from marshmallow import Schema, fields, post_load, validate
 from webargs import ValidationError, fields
 from webargs.flaskparser import use_kwargs
@@ -239,6 +239,31 @@ def thread_detail(slug, page):
             "per_page": paginator.per_page,
             "page": paginator.page,
             "items": comments_schema.dump(paginator.items),
+        },
+    }, 200
+
+
+
+@api.route("ping", methods=["GET"])
+@jwt_required()
+@limiter.limit("5 per minute")
+@cache.cached(timeout=25)
+@use_kwargs(
+    { "slug": fields.Str(required=True) },
+    location="query",
+)
+def thread_ping(slug):
+    thread = Thread.query.filter_by(slug=slug).first()
+
+    if not thread:
+        return "Thread not found", 404
+
+    count = Comment.query.filter(Comment.thread == thread).count()
+
+    return {
+        "thread": thread_schema.dump(thread),
+        "comments": {
+            "total": count,
         },
     }, 200
 
