@@ -59,6 +59,9 @@ export default () => {
           {complete && (
             <p className="success">Your preferences have been saved</p>
           )}
+          {Object.keys(errors).length > 0 && (
+            <p className="error">There were some problems saving your changes</p>
+          )}
           {errors?.global && <div className="error">{errors.global}</div>}
 
           <header>

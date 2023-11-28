@@ -3,14 +3,11 @@ from math import ceil
 import html5lib
 from flask import Blueprint
 from flask_jwt_extended import current_user, jwt_required
+from gather.bot import post_comment_hook
 from gather.models import Comment, Thread, ThreadCategories, Title, User, db
 from gather.routes import limiter
-from gather.schemas import (
-    comments_schema,
-    thread_schema,
-    threads_schema,
-    title_schema,
-)
+from gather.schemas import comments_schema, thread_schema, threads_schema, title_schema
+from gather.utils import encode_emojis
 from marshmallow import Schema, fields, post_load, validate
 from webargs import ValidationError, fields
 from webargs.flaskparser import use_kwargs
@@ -18,8 +15,6 @@ from webargs.flaskparser import use_kwargs
 api = Blueprint("threads", __name__, url_prefix=f"/threads")
 
 
-def encode_emojis(text):
-    return text.replace("[>|]", "[&gt;|]").replace("[><]", "[&gt;&lt;]")
 
 
 def validate_fragment(text):
@@ -337,6 +332,8 @@ def thread_update(slug, content):
             per_page=user.comments_per_page,
         )
     )
+
+    post_comment_hook(thread, comment)
 
     return {
         "thread": thread_schema.dump(thread),

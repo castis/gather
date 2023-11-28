@@ -37,7 +37,6 @@ const Toolbar = () => {
   const resetState = useCallback(() => {
     setUser({ ...initialUser });
     localStorage.clear();
-    navigate("/");
   }, []);
 
   useEffect(updateMe, [globalKey]);
@@ -65,9 +64,7 @@ const Toolbar = () => {
     setVisible(!visible);
   });
 
-  if (loading) {
-    return <View />;
-  }
+  if (loading) return <View />;
 
   return (
     <View>

@@ -31,13 +31,7 @@ const PasswordReset = () => {
       api
         .post(`/auth/set_password`, Object.fromEntries(form.entries()))
         .then(({ status }) => {
-          if (status == 204) {
-            setComplete(true);
-            setUser((user) => ({
-              ...user,
-              password_reset_sent_at: null,
-            }));
-          }
+          if (status == 204) setComplete(true);
         })
         .catch(handleApiError)
         .finally(() => setWorking(false));
@@ -51,10 +45,7 @@ const PasswordReset = () => {
 
       <StyledResetContent>
         {complete ? (
-          <p>
-            Hooray, your password has been reset. Go ahead and take the login
-            form for a spin.
-          </p>
+          <p>Hooray, your password has been reset!</p>
         ) : (
           <form onSubmit={onSubmit}>
             <p>Once you've reset your password you'll be able to log in.</p>

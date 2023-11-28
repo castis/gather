@@ -60,6 +60,7 @@ class User(db.Model):
     password_reset_sent_at = Column(DateTime)
 
     privileged = Column(Boolean, default=True)
+    admin = Column(Boolean, default=False)
     banned = Column(Boolean, default=False)
     banned_reason = Column(String(255))
 
@@ -81,7 +82,6 @@ class User(db.Model):
     theme = Column(String(16), default="light")
     avatar = Column(String(32), default=None)
     html = Column(Boolean, default=True)
-    advanced = Column(Boolean, default=False)
 
     application = relationship("Applicant", backref="user", uselist=False)
 
@@ -217,6 +217,7 @@ class Thread(db.Model):
     )
     nsfw = Column(Boolean, default=False)
     enabled = Column(Boolean, default=True)
+    bot = Column(Boolean, default=True)
 
     author_id = Column(Integer, ForeignKey("users.id"))
     author = relationship(
@@ -264,25 +265,9 @@ class Comment(db.Model):
 
     content = Column(Text())
     points = Column(Integer, default=0)
-    processed = Column(Boolean, default=False)
 
     created_at = Column(DateTime, default=datetime.now)
     updated_at = Column(DateTime, default=datetime.now, onupdate=datetime.now)
-
-    # def insert():
-    #     influx_write.write(
-    #         bucket="legion",
-    #         record=(
-    #             Point("comments")
-    #             .tag("author", comment.author.name)
-    #             .tag("type", comment.type)
-    #             .tag("origin", comment.origin)
-    #             .field("sentiment", comment.sentiment)
-    #             # .field("author", comment.author.name)
-    #             .field("comment_id", comment.id)
-    #             .time(comment.created_at)
-    #         ),
-    #     )
 
     def __repr__(self):
         return f'<Comment "{self.content[0:10]}">'

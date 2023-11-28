@@ -1,8 +1,8 @@
 """initial migration
 
-Revision ID: 35ae7aa59ce9
+Revision ID: b90ca6f6afc5
 Revises: 
-Create Date: 2023-11-25 18:23:24.167960
+Create Date: 2023-11-28 12:07:11.473802
 
 """
 from alembic import op
@@ -10,7 +10,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision = '35ae7aa59ce9'
+revision = 'b90ca6f6afc5'
 down_revision = None
 branch_labels = None
 depends_on = None
@@ -30,6 +30,7 @@ def upgrade():
     sa.Column('password_reset_token', sa.String(length=64), nullable=True),
     sa.Column('password_reset_sent_at', sa.DateTime(), nullable=True),
     sa.Column('privileged', sa.Boolean(), nullable=True),
+    sa.Column('admin', sa.Boolean(), nullable=True),
     sa.Column('banned', sa.Boolean(), nullable=True),
     sa.Column('banned_reason', sa.String(length=255), nullable=True),
     sa.Column('created_at', sa.DateTime(), nullable=True),
@@ -48,7 +49,6 @@ def upgrade():
     sa.Column('theme', sa.String(length=16), nullable=True),
     sa.Column('avatar', sa.String(length=32), nullable=True),
     sa.Column('html', sa.Boolean(), nullable=True),
-    sa.Column('advanced', sa.Boolean(), nullable=True),
     sa.PrimaryKeyConstraint('id'),
     sa.UniqueConstraint('email'),
     sa.UniqueConstraint('email_reset_token'),
@@ -97,6 +97,7 @@ def upgrade():
     sa.Column('category', sa.Enum('discussion', 'project', 'advice', 'meaningless', name='threadcategories'), nullable=True),
     sa.Column('nsfw', sa.Boolean(), nullable=True),
     sa.Column('enabled', sa.Boolean(), nullable=True),
+    sa.Column('bot', sa.Boolean(), nullable=True),
     sa.Column('author_id', sa.Integer(), nullable=True),
     sa.Column('last_author_id', sa.Integer(), nullable=True),
     sa.Column('comment_count', sa.Integer(), nullable=True),
@@ -191,3 +192,4 @@ def downgrade():
     op.execute('DROP TYPE threadcategories;')
     op.execute('DROP TYPE relationshiptype;')
     op.execute('DROP TYPE votetype;')
+

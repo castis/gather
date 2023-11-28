@@ -27,14 +27,18 @@ class LoginRequest(Schema):
 
     @post_load
     def validate_user(self, data, **kwargs):
-        if (
-            (user := User.query.filter_by(name=data["name"]).one_or_none())
-            and not user.banned
-            and user.check_password(data["password"])
-        ):
-            return dict(user=user)
+        user = User.query.filter_by(name=data["name"]).one_or_none()
 
-        raise ValidationError({"name": user.banned_reason or "Nah"})
+        if not user:
+            raise ValidationError({"name": "Never heard of you"})
+
+        if user.banned:
+            raise ValidationError({"name": user.banned_reason or "Nah"})
+
+        if not user.check_password(data["password"]):
+            raise ValidationError({"password": "Nope"})
+
+        return dict(user=user)
 
 
 @api.route("login", methods=["POST"])
@@ -109,7 +113,7 @@ class ResetPasswordRequest(Schema):
 
         if password != confirmation:
             raise ValidationError({"confirmation": "passwords must match"})
-    
+
         return dict(
             user=user,
             password=password,
@@ -147,11 +151,12 @@ class VerifyEmailRequest(Schema):
 
         return dict(user=user)
 
+
 @api.route("verify_email", methods=["POST"])
 @limiter.limit("2 per minute")
 @use_kwargs(VerifyEmailRequest())
 def verify_email(user):
-    user.email_reset_token= None
+    user.email_reset_token = None
     user.email_reset_sent_at = None
 
     db.session.add(user)

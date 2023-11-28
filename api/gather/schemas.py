@@ -61,6 +61,7 @@ class MeSchema(ma.Schema):
             "date_created",
             "threads_per_page",
             "comments_per_page",
+            "privileged",
             "html",
             "theme",
             "avatar",

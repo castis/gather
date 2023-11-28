@@ -19,8 +19,8 @@ api = Blueprint("preferences", __name__, url_prefix=f"/preferences")
 
 
 allowed_mimes = {
-    # "image/jpeg": "jpg",
     "image/gif": "gif",
+    # "image/jpeg": "jpg",
     # "image/png": "png",
 }
 allowed_keys = list(allowed_mimes.keys())
@@ -124,7 +124,7 @@ class UserAvatarUpdateSchema(Schema):
             return data
 
         if avatar.mimetype not in allowed_keys:
-            raise ValidationError({"avatar": "gif only"})
+            raise ValidationError({"avatar": "gif only for the moment"})
 
         if (file_size := avatar.seek(0, 2)):
             if file_size > 5 * 1024:

@@ -8,6 +8,11 @@ logger = LocalProxy(lambda: current_app.logger)
 cache = Cache()
 
 
+def encode_emojis(text):
+    return text.replace("[>|]", "[&gt;|]").replace("[><]", "[&gt;&lt;]")
+
+
+
 def get_page():
     try:
         return int(request.args.get("page"))
