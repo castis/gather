@@ -28,7 +28,7 @@ import ThreadStats from "./app/pages/threadstats";
 import Users from "./app/pages/users";
 import User from "./app/pages/user";
 import Buddies from "./app/pages/buddies";
-
+import { location } from "./app/config";
 
 import { Inbox, Sent } from "./app/pages/messages/inbox";
 import ComposeMessage from "./app/pages/messages/compose";
@@ -37,6 +37,18 @@ import { userState } from "./app/atoms";
 import { NotFound } from "./app/components/stage";
 
 const App = () => {
+  if (location == "production") {
+    const script = document.createElement("script");
+    script.async = true;
+    script.defer = true;
+    script.setAttribute(
+      "data-website-id",
+      "7ba22ee6-0aaa-473e-a8f1-dea944c17ac5"
+    );
+    script.src = "https://t.tinybluerobot.com/party.js";
+    document.head.appendChild(script);
+  }
+
   const { theme: name } = useRecoilValue(userState);
   return (
     <ThemeProvider theme={{ name }}>
@@ -62,19 +74,16 @@ const App = () => {
           <Route path="/messages">
             <Route path="/messages/inbox/:page?" element={<Inbox />} />
             <Route path="/messages/sent/:page?" element={<Sent />} />
-            <Route
-              path="/messages/write/:user?"
-              element={<ComposeMessage />}
-            />
+            <Route path="/messages/write/:user?" element={<ComposeMessage />} />
           </Route>
 
           <Route path="/" element={<Threads />}>
             <Route path="page/:page" />
-            <Route path="sort/:sort" >
+            <Route path="sort/:sort">
               <Route path="page/:page" />
             </Route>
-            <Route path=":type/:identifier" >
-              <Route path="sort/:sort" >
+            <Route path=":type/:identifier">
+              <Route path="sort/:sort">
                 <Route path="page/:page" />
               </Route>
             </Route>

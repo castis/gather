@@ -16,7 +16,7 @@ from gather.models import Comment, Thread, User, db
 TIMEOUT = 60 * 10  # seconds
 
 bp = Blueprint("mirror", __name__, cli_group="mirror")
-bp.cli.short_help = "Eventually create a mirror of YH 3"
+bp.cli.short_help = "Gradually create a mirror of YH 3"
 
 
 # flask mirror yh3

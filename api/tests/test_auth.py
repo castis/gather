@@ -7,7 +7,7 @@ from gather.config import JWT_ACCESS_COOKIE_NAME
 def test_not_logged_in(client):
     resp = client.post("/auth/ping")
     assert int(resp.status_code) == 401
-    assert resp.json["msg"].startswith("Missing cookie ")
+    assert resp.text == ""
 
 
 # def test_login(client, enabled_user):

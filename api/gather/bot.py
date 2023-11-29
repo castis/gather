@@ -77,16 +77,16 @@ If you're going to use emojis, use these:
     [:[] surprised face
     ['(] a crying face
     [:*] a kiss
-    [B-] a butt, pooping
+    [B-] you think something is bullshit
     [:=] throwing up
     [:.] a confused face
-    [O] blobfish
+    [O] blobfish, ugly but we love it anyways
     [8)] a cool sunglasses face
     [:{] a mustache face
     [:@] a ninja
     [%(] greenie
-    [><] a exasperated face, on an owl
-    [RR] ring ring, for when something has been discussed ad nauseum
+    [><] an exasperated face, on an owl
+    [RR] a ringring, for when something has been discussed ad nauseum
     [fbm] flaming battery meter, for when a ui faux pas has been committed
 """
 

@@ -50,6 +50,7 @@ class User(db.Model):
     legacy_order = Column(Integer, unique=True)
     name = Column(String(32), unique=True, nullable=False)
     slug = Column(String(32), unique=True, nullable=False)
+    avatar = Column(String(32), default=None)
 
     email = Column(String(255), unique=True)
     email_reset_token = Column(String(64), unique=True)
@@ -59,8 +60,13 @@ class User(db.Model):
     password_reset_token = Column(String(64), unique=True)
     password_reset_sent_at = Column(DateTime)
 
+    # able to change title, use new post notifier, etc
     privileged = Column(Boolean, default=True)
+
+    # both are unused at the moment
     admin = Column(Boolean, default=False)
+    theme = Column(String(16), default="light")
+
     banned = Column(Boolean, default=False)
     banned_reason = Column(String(255))
 
@@ -68,21 +74,22 @@ class User(db.Model):
     updated_at = Column(DateTime, default=datetime.now, onupdate=datetime.now)
     last_seen_at = Column(DateTime, default=datetime.now)
 
-    # prefs
+    # info
     preferred_name = Column(String(255))
     location = Column(String(255))
     about = Column(Text())
     flickr = Column(String(255))
     facebook = Column(String(255))
     instagram = Column(String(255))
+
+    # settings
     random_titles = Column(Boolean, default=True)
     hide_enemies = Column(Boolean, default=True)
     threads_per_page = Column(Integer, default=50, nullable=False)
     comments_per_page = Column(Integer, default=50, nullable=False)
-    theme = Column(String(16), default="light")
-    avatar = Column(String(32), default=None)
     html = Column(Boolean, default=True)
 
+    # the application this user originated from
     application = relationship("Applicant", backref="user", uselist=False)
 
     relationships = relationship(

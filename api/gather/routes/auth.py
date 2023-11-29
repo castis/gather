@@ -1,6 +1,6 @@
 from datetime import datetime, timedelta, timezone
 
-from flask import Blueprint, jsonify
+from flask import Blueprint, Response, jsonify
 from flask_jwt_extended import (
     create_access_token,
     current_user,
@@ -199,9 +199,9 @@ def buddies_count(user_id):
 @jwt_required(optional=True)
 def ping():
     if not current_user or current_user.banned:
-        response = jsonify()
+        response = Response(status=401 if not current_user else 403)
         unset_jwt_cookies(response)
-        return response, 401 if not current_user else 403
+        return response
 
     return {
         "user": me_schema.dump(current_user),

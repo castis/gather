@@ -13,10 +13,10 @@ limiter = Limiter(
     storage_uri=os.environ.get("REDIS_URI"),
     strategy="fixed-window",
     default_limits=[
-        "86400 per day",
-        "1000 per hour",
-        "100 per minute",
-        "20 per second",
+        "3000 per day",
+        "300 per hour",  # Helps prevent long-term abuse
+        "20 per minute",  # Reasonable for active participation
+        "5 per second",  # Prevents rapid-fire requests
     ],
 )
 
