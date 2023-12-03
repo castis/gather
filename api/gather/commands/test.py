@@ -1,7 +1,6 @@
 import boto3
 import click
 from flask import Blueprint
-from gather.models import User
 
 bp = Blueprint("test", __name__, cli_group="test")
 bp.cli.short_help = "Various test operations."
@@ -41,4 +40,11 @@ def test_s3():
 def test_email():
     from gather.mail import send
 
-    send(User.query.first(), "test subject", "test content goes here")
+    send("castis@duckbo.at", "test subject", "test content goes here")
+
+@bp.cli.command("yh3")
+def test_yh3():
+    from gather.legacy.services import YH3
+
+    yh3 = YH3()
+    yh3.send_message("castis", "test subject", "test content goes here")

@@ -1,25 +1,27 @@
 # Gather
 
-A messageboard.
+Messageboard software.
 
 ### Prerequisites to run locally
 
 1. git
 2. docker
 
-### Prerequisites to deploy
-
-1. AWS CLI
-2. IAM credentials
-
 ## Start here
 
-There are 2 parts:
+There are 2 main parts: an API and a web application.
 
-1. The API is a [flask](https://flask.palletsprojects.com/en/2.0.x/) app that serves data from [postgres](https://www.postgresql.org) and [redis](https://redis.io).
+1. The API is a [flask](https://flask.palletsprojects.com/en/3.0.x/) app that serves data from [postgres](https://www.postgresql.org) with help from [redis](https://redis.io).
 2. The web application is [react](https://react.dev) and is built with [parcel](https://parceljs.org).
 
-### Running
+### Setup
+
+1. Clone this repo
+2. `cd` into the repo
+3. Run `docker-compose up`
+4. Open http://localhost:1234
+
+### Running separately
 
 If you're setting this up for the first time, use `make api` to get to a bash prompt where you can run `flask db upgrade` to setup the database.
 

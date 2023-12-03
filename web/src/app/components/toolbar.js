@@ -8,6 +8,7 @@ import styled from "styled-components";
 import { api } from "../api";
 import { buddiesState, globalKeyState, initialUser, userState } from "../atoms";
 import Me from "./me";
+import Messaging from "./messaging";
 
 import logo from "/src/images/chrome/logo.svg";
 
@@ -100,7 +101,7 @@ const Toolbar = () => {
         aria-expanded={visible}
       >
         <Me resetState={resetState} />
-        {/* {user.id && <Messaging />} */}
+        {user.id && <Messaging />}
         <div className="threads">
           <Link to="/" className="header">
             Threads

@@ -2,34 +2,40 @@ import React, { useCallback, useEffect, useState } from "react";
 import { camelCase, startCase } from "lodash";
 import { useParams } from "react-router";
 import { Link, useNavigate } from "react-router-dom";
-import { atom, useRecoilState, useRecoilValue } from "recoil";
+import {
+  atom,
+  useRecoilState,
+  useRecoilValue,
+  useSetRecoilState,
+} from "recoil";
 import styled from "styled-components";
 
 import { api } from "../api";
 import { replyTextState, userState } from "../atoms";
 import Pagination from "../components/pagination";
 import { Reply } from "../components/reply";
+import useNotifier from "../components/notifier";
 import { Content, Error, Skeleton, Stage, Title } from "../components/stage";
 import { pinkies } from "../components/texteditor";
 import { avatarLocation } from "../config";
 import { loadDatetime, useSingleErrorHandler } from "../utils";
+import { threadState, userState } from "../atoms";
 
 import p05 from "url:/src/images/pinkies/05.gif";
 
-const threadState = atom({
-  key: "thread",
-  default: {},
-});
-
 const Thread = () => {
   const params = useParams();
+  const user = useRecoilValue(userState);
   const [thread, setThread] = useRecoilState(threadState);
   const [resetKey, setResetKey] = useState();
-  const [comments, setComments] = useState([]);
+  const [comments, setComments] = useState({
+    items: [],
+    total: 0,
+    perPage: 25,
+  });
   const [working, setWorking] = useState(true);
   const [error, setError, handleApiError] = useSingleErrorHandler();
-  const [newComments, setNewComments] = useState(4);
-
+  const [newComments, resetNotifier, stopNotifier] = useNotifier(thread);
   const navigate = useNavigate();
 
   const slug = params.slug;
@@ -41,37 +47,8 @@ const Thread = () => {
       ...data.comments,
       perPage: data.comments.per_page,
     });
-    setNewComments(0);
+    resetNotifier();
   });
-
-  // new post notifier
-  useEffect(() => {
-    let shouldContinue = true;
-    let interval = setInterval(() => {
-      if (!shouldContinue) {
-        clearInterval(interval);
-        return;
-      }
-
-      api
-        .get(`/threads/ping`, { params: { slug } })
-        .then(({ data }) =>
-          setNewComments(data.comments.total - comments.total)
-        )
-        .catch((error) => {
-          console.error(error);
-          // if we get rate limited, stop doing this
-          if (error.response && error.response.status === 429) {
-            shouldContinue = false;
-          }
-        });
-    }, 5000);
-
-    return () => {
-      clearInterval(interval);
-      shouldContinue = false;
-    };
-  }, [comments]);
 
   useEffect(() => {
     setWorking(true);
@@ -107,7 +84,7 @@ const Thread = () => {
       items={comments}
       plural="comments"
       path={`/thread/${slug}`}
-      cta={<Admin />}
+      cta={thread.author.id == user.id && <Admin />}
     >
       in <Link to="/">Threads</Link> &gt;{" "}
       <Link to={`/category/${thread.category}`}>
@@ -131,7 +108,8 @@ const Thread = () => {
         <Reply thread={thread} onUpdateData={onUpdateData} />
         {newComments > 0 && (
           <div className="new-comments" onClick={reloadThread}>
-            {newComments} new comment{newComments > 1 ? "s" : ""}
+            {newComments} new comment{newComments > 1 ? "s" : ""} added
+            <div className="close" onClick={() => stopNotifier()}></div>
           </div>
         )}
       </StyledThread>
@@ -173,13 +151,13 @@ const StyledThread = styled(Content)`
     position: fixed;
     left: 25px;
     bottom: 25px;
-    background: #ff9898;
+    background: #fef6e9;
     padding: 10px;
     width: 200px;
 
     cursor: pointer;
     font-size: 12px;
-    color: #FFF;
+    color: #fff;
 
     &:hover {
       background: #ffaeae;
@@ -282,7 +260,7 @@ const Admin = () => {
 
 export const Comment = ({ comment, contentOnly = false }) => {
   const user = useRecoilValue(userState);
-  const [replyText, setReplyText] = useRecoilState(replyTextState);
+  const setReplyText = useSetRecoilState(replyTextState);
   const [selection, setSelection] = useState("");
   const [viewingSource, setViewingSource] = useState(false);
 
@@ -296,7 +274,8 @@ export const Comment = ({ comment, contentOnly = false }) => {
 
   const quote = useCallback(() => {
     setReplyText(
-      replyText +
+      (replyText) =>
+        replyText +
         `<blockquote title="${author.name}">${
           selection.length ? selection : comment.content
         }</blockquote>`
@@ -359,7 +338,7 @@ export const Comment = ({ comment, contentOnly = false }) => {
           </div>
           <div className="items">
             <Link to={`/user/${author.slug}`}>BUDDY? IGNORE?</Link>
-            {/* <Link to={`/message/${author.name}`}>SEND A MESSAGE</Link> */}
+            <Link to={`/messages/compose/${author.name}`}>SEND A MESSAGE</Link>
           </div>
         </div>
       </div>
@@ -488,6 +467,7 @@ const StyledComment = styled.div`
     grid-row: 2;
 
     font-size: 12px;
+    line-height: 1rem;
 
     iframe {
       width: 100%;
@@ -507,6 +487,11 @@ const StyledComment = styled.div`
     img,
     picture {
       display: inline;
+    }
+
+    .pinkie {
+      vertical-align: top;
+      margin: 0 1px;
     }
 
     blockquote {

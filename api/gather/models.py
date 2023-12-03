@@ -1,4 +1,5 @@
 import enum
+import uuid
 from datetime import datetime
 
 from flask_migrate import Migrate
@@ -59,6 +60,20 @@ class User(db.Model):
     password_hash = Column(String(255))
     password_reset_token = Column(String(64), unique=True)
     password_reset_sent_at = Column(DateTime)
+
+    inbox = relationship(
+        "DirectThread",
+        backref="recipient",
+        lazy="dynamic",
+        foreign_keys="DirectThread.recipient_id",
+    )
+
+    outbox = relationship(
+        "DirectThread",
+        backref="author",
+        lazy="dynamic",
+        foreign_keys="DirectThread.author_id",
+    )
 
     # able to change title, use new post notifier, etc
     privileged = Column(Boolean, default=True)
@@ -322,7 +337,10 @@ class DirectThread(db.Model):
     slug = Column(String(128), unique=True, index=True)
 
     author_id = Column(Integer, ForeignKey("users.id"))
+    # author = relationship("User", backref="outbox")
+
     recipient_id = Column(Integer, ForeignKey("users.id"))
+    # recipient = relationship("User", backref="inbox")
 
     comments = relationship("DirectComment", backref="thread")
 
@@ -332,15 +350,23 @@ class DirectThread(db.Model):
     def __repr__(self):
         return f"<DirectThread {self.title}>"
 
+    @staticmethod
+    def generate_slug():
+        slug = str(uuid.uuid4())
+        while DirectThread.query.filter_by(slug=slug).first():
+            slug = str(uuid.uuid4())
+        return slug
+
 
 class DirectComment(db.Model):
     __tablename__ = "direct_comments"
     id = Column(Integer, primary_key=True)
 
     author_id = Column(Integer, ForeignKey("users.id"))
-    # author = relationship("User", back_populates="direct_comments")
+    author = relationship("User", backref="direct_comments")
 
     thread_id = Column(Integer, ForeignKey("direct_threads.id"))
+
     content = Column(Text())
     read = Column(Boolean, default=False)
 

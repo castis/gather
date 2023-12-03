@@ -2,6 +2,9 @@ from flask import request, current_app
 from xkcdpass import xkcd_password
 from flask_caching import Cache
 from werkzeug.local import LocalProxy
+import hashlib
+import time
+import random
 
 logger = LocalProxy(lambda: current_app.logger)
 
@@ -10,7 +13,6 @@ cache = Cache()
 
 def encode_emojis(text):
     return text.replace("[>|]", "[&gt;|]").replace("[><]", "[&gt;&lt;]")
-
 
 
 def get_page():
@@ -32,3 +34,8 @@ def random_string(numwords=4, delimiter="-", **kwargs):
         delimiter=delimiter,
         **kwargs,
     )
+
+
+def generate_sqid_equiv():
+    unique_string = f"{time.time_ns()}_{random.randint(0, 1000000)}"
+    return hashlib.sha256(unique_string.encode()).hexdigest()[:12]

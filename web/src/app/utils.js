@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { DateTime } from "luxon";
 
 export const useSingleErrorHandler = () => {
-  const [error, setError] = useState(null);
+  const [error, setError] = useState();
 
   const handleApiError = (error) => {
     console.error(error);

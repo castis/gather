@@ -3,18 +3,22 @@ from math import ceil
 import html5lib
 from flask import Blueprint
 from flask_jwt_extended import current_user, jwt_required
+from datetime import datetime, timedelta, timezone
 from gather.bot import post_comment_hook
 from gather.models import Comment, Thread, ThreadCategories, Title, User, db
 from gather.routes import limiter
-from gather.schemas import comments_schema, thread_schema, threads_schema, title_schema
+from gather.schemas import (
+    comments_schema,
+    thread_schema,
+    threads_schema,
+    title_schema,
+)
 from gather.utils import encode_emojis, cache
 from marshmallow import Schema, fields, post_load, validate
 from webargs import ValidationError, fields
 from webargs.flaskparser import use_kwargs
 
 api = Blueprint("threads", __name__, url_prefix=f"/threads")
-
-
 
 
 def validate_fragment(text):
@@ -169,16 +173,23 @@ def set_title(text):
     return title_schema.dump(title), 200
 
 
+class ThreadCreationRequest(Schema):
+    title = fields.Str(required=True, validate=validate.Length(min=1, max=128))
+    category = fields.Str(required=True, validate=validate_category)
+    content = fields.Str(required=True, validate=validate_fragment)
+
+    @post_load
+    def validate_form(self, data, **kwargs):
+        if not current_user.privileged:
+            raise ValidationError({"title": "No"})
+
+        return data
+
+
 @api.route("", methods=["POST"])
 @limiter.limit("2 per minute")
 @jwt_required()
-@use_kwargs(
-    {
-        "title": fields.Str(required=True),
-        "content": fields.Str(required=True, validate=validate_fragment),
-        "category": fields.Str(required=True, validate=validate_category),
-    },
-)
+@use_kwargs(ThreadCreationRequest())
 def thread_create(title, content, category):
     user = current_user
     thread = Thread(
@@ -207,21 +218,26 @@ def thread_create(title, content, category):
     return {"thread": thread_schema.dump(thread)}, 200
 
 
+class ThreadDetailRequest(Schema):
+    slug = fields.Str(required=True)
+    page = fields.Int(load_default=1)
+
+    @post_load
+    def validate_form(self, data, **kwargs):
+        thread = Thread.query.filter_by(slug=data["slug"]).first()
+        if not thread:
+            raise ValidationError({"slug": "Invalid thread"})
+
+        return dict(
+            thread=thread,
+            page=data["page"],
+        )
+
+
 @api.route("detail", methods=["GET"])
 @jwt_required()
-@use_kwargs(
-    {
-        "slug": fields.Str(required=True),
-        "page": fields.Int(load_default=1),
-    },
-    location="query",
-)
-def thread_detail(slug, page):
-    thread = Thread.query.filter_by(slug=slug).first()
-
-    if not thread:
-        return "Thread not found", 404
-
+@use_kwargs(ThreadDetailRequest(), location="query")
+def thread_detail(thread, page):
     paginator = (
         Comment.query.filter(Comment.thread == thread)
         .order_by(Comment.created_at)
@@ -243,15 +259,11 @@ def thread_detail(slug, page):
     }, 200
 
 
-
-@api.route("ping", methods=["GET"])
+@api.route("ping", methods=["POST"])
 @jwt_required()
 @limiter.limit("5 per minute")
 @cache.cached(timeout=25)
-@use_kwargs(
-    { "slug": fields.Str(required=True) },
-    location="query",
-)
+@use_kwargs({"slug": fields.Str(required=True)})
 def thread_ping(slug):
     thread = Thread.query.filter_by(slug=slug).first()
 
@@ -390,7 +402,9 @@ def thread_settings(slug, title=None, nsfw=None, enabled=None):
     if not thread:
         return "", 401
 
-    if title is not None:
+    if title is not None and thread.created_at > datetime.now(
+        timezone.utc
+    ) - timedelta(minutes=15):
         thread.title = title
     if nsfw is not None:
         thread.nsfw = nsfw

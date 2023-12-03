@@ -4,10 +4,15 @@ import { useParams } from "react-router";
 import { api } from "../../api";
 import { Stage, Title, Content } from "../../components/stage";
 import styled from "styled-components";
-import { Link } from "react-router-dom"
+import { Link } from "react-router-dom";
 
 const Box = ({ path }) => {
-  const [messages, setMessages] = useState({});
+  const [messages, setMessages] = useState({
+    items: [],
+    total: 0,
+    page: 1,
+    pages: 1,
+  });
   const [page, setPage] = useState(1);
 
   useEffect(() => {
@@ -29,18 +34,27 @@ const Box = ({ path }) => {
       <Title>Well aren't you Mr. Popular?</Title>
       <StyledContent>
         <div className="controls">
-          <Link to="/messages/write" className="new-thread">
+          <Link to="/messages/compose" className="new-thread">
             New Message
           </Link>
         </div>
-        {messages.items &&
-          messages.items.map((message) => {
-            return (
-              <div key={message.id} className="message">
+        <div className="controls2">
+          <Link to="/messages/inbox">
+            Inbox (0)
+          </Link>
+          <Link to="/messages/sent">
+            Sent Items
+          </Link>
+        </div>
+        {messages.items.map((message) => {
+          return (
+            <div key={message.id} className="message">
+              <Link to={`/messages/message/${message.slug}`}>
                 {message.title}
-              </div>
-            );
-          })}
+              </Link>
+            </div>
+          );
+        })}
       </StyledContent>
     </Stage>
   );
@@ -63,11 +77,11 @@ const StyledContent = styled(Content)`
       font-size: 9px;
       margin-left: auto;
       padding: 4px;
-  
+
       &:hover {
         background-color: #494949;
         color: #e6f7fe;
       }
     }
   }
-`
+`;

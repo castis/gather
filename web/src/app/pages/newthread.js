@@ -98,7 +98,7 @@ export default () => {
 
           <div className="step">
             <h3>Step 2: Write a thread title</h3>
-            <div className="title">
+            <div className="field">
               <input type="text" name="title" />
             </div>
           </div>
@@ -152,7 +152,7 @@ const StyledNewThreadForm = styled.form`
     }
   }
 
-  .title input {
+  .field input {
     font-size: 16px;
     width: 100%;
     max-width: 350px;

@@ -19,6 +19,10 @@ RUN mkdir -p /static/avatars \
     && mkdir -p /static/images \
     && chown -R pinkie /static/*
 
+COPY entrypoint.sh /usr/local/bin/
+RUN chmod +x /usr/local/bin/entrypoint.sh
+ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
+
 USER pinkie
 
 COPY Pipfile Pipfile.lock ./
@@ -26,10 +30,9 @@ RUN pipenv install --deploy --ignore-pipfile
 
 COPY --chown=pinkie:pinkie . .
 
-RUN echo ". $(pipenv --venv)/bin/activate" >> /home/pinkie/.bashrc
-
 EXPOSE 5000
-CMD ["pipenv", "run", "gunicorn", "-b :5000", "gather.app:app"]
+
+CMD ["gunicorn", "-b :5000", "gather.app:app"]
 
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
     CMD curl -f http://localhost:5000/health || exit 1

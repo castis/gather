@@ -210,7 +210,7 @@ export const Content = styled.div`
 export const NotFound = () => (
   <StyledSkeleton>
     <Title>
-      404
+      Not found
     </Title>
     <Content>
       <p>
@@ -220,6 +220,18 @@ export const NotFound = () => (
   </StyledSkeleton>
 );
 
+export const NotAllowed = () => (
+  <StyledSkeleton>
+    <Title>
+      Not allowed
+    </Title>
+    <Content>
+      <p>
+        If you're lost, try <Link to="/">going home</Link>.
+      </p>
+    </Content>
+  </StyledSkeleton>
+);
 
 export const Error = ({ message }) => {
   return (

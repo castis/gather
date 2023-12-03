@@ -228,7 +228,6 @@ const Threads = () => {
                   className={classnames({
                     thread: true,
                     nsfw: thread.nsfw,
-                    og: !!thread.mongo_id,
                     closed: !thread.enabled,
                   })}
                 >

@@ -37,3 +37,8 @@ export const userState = atom({
   key: "user",
   default: initialUser,
 });
+
+export const threadState = atom({
+  key: "thread",
+  default: {},
+});

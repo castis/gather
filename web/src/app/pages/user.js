@@ -49,7 +49,7 @@ const User = () => {
           <section>
             <h3>{user.name}</h3>
             <ul>
-              {/* <li><Link to={`/messages/send/${user.slug}`}>Send a message</Link></li> */}
+              <li><Link to={`/messages/compose/${user.slug}`}>Send a message</Link></li>
               <li><Link to={`/buddies/${user.slug}`}>Change buddy status</Link></li>
               <li><Link to={`/startedby/${user.slug}`}>View threads started</Link></li>
             </ul>

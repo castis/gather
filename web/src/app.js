@@ -32,6 +32,7 @@ import { location } from "./app/config";
 
 import { Inbox, Sent } from "./app/pages/messages/inbox";
 import ComposeMessage from "./app/pages/messages/compose";
+import DirectMessage from "./app/pages/messages/message";
 
 import { userState } from "./app/atoms";
 import { NotFound } from "./app/components/stage";
@@ -72,9 +73,10 @@ const App = () => {
           <Route path="/preferences" element={<Preferences />} />
 
           <Route path="/messages">
+            <Route path="/messages/message/:slug" element={<DirectMessage />} />
             <Route path="/messages/inbox/:page?" element={<Inbox />} />
             <Route path="/messages/sent/:page?" element={<Sent />} />
-            <Route path="/messages/write/:user?" element={<ComposeMessage />} />
+            <Route path="/messages/compose/:user?" element={<ComposeMessage />} />
           </Route>
 
           <Route path="/" element={<Threads />}>

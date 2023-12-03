@@ -1,5 +1,14 @@
 from flask_marshmallow import Marshmallow
-from gather.models import Applicant, Comment, Thread, ThreadCategories, Title, User
+from gather.models import (
+    Applicant,
+    Comment,
+    DirectComment,
+    DirectThread,
+    RelationshipType,
+    Thread,
+    Title,
+    User,
+)
 from marshmallow import EXCLUDE, Schema, fields
 
 
@@ -86,7 +95,6 @@ class ThreadSchema(ma.Schema):
         model = Thread
         fields = (
             "id",
-            "mongo_id",
             "title",
             "slug",
             "nsfw",
@@ -115,7 +123,6 @@ class CommentSchema(ma.Schema):
         model = Comment
         fields = (
             "id",
-            "mongo_id",
             "icon",
             "points",
             "content",
@@ -163,3 +170,43 @@ class RelationshipSchema(Schema):
 
 
 relationship_schema = RelationshipSchema()
+
+
+class DirectCommentSchema(Schema):
+    class Meta:
+        model = DirectComment
+        fields = (
+            "author",
+            "content",
+            "read",
+            "created_at",
+        )
+
+    author = ma.Nested(user_schema)
+    content = ma.Function(lambda obj: decode_emojis(obj.content))
+
+
+direct_comment_schema = DirectCommentSchema()
+direct_comments_schema = DirectCommentSchema(many=True)
+
+
+class DirectThreadSchema(Schema):
+    class Meta:
+        model = DirectThread
+        fields = (
+            "slug",
+            "title",
+            "author",
+            "recipient",
+            "comments",
+            "created_at",
+            "updated_at",
+        )
+
+    author = ma.Nested(user_schema)
+    recipient = ma.Nested(user_schema)
+    comments = ma.Nested("DirectCommentSchema", many=True)
+
+
+direct_thread_schema = DirectThreadSchema()
+direct_threads_schema = DirectThreadSchema(many=True)
