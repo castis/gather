@@ -237,6 +237,7 @@ class Thread(db.Model):
     category = Column(
         Enum(ThreadCategories), default=ThreadCategories.discussion
     )
+    public = Column(Boolean, default=False)
     nsfw = Column(Boolean, default=False)
     enabled = Column(Boolean, default=True)
     bot = Column(Boolean, default=True)

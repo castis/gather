@@ -253,6 +253,10 @@ const StyledTextEditor = styled.div`
 
     a {
       cursor: pointer;
+
+      img {
+        image-rendering: pixelated;
+      }
     }
   }
 
@@ -272,6 +276,7 @@ const StyledTextEditor = styled.div`
 
       img {
         margin: auto 0 10px -10px;
+        image-rendering: pixelated;
       }
     }
 

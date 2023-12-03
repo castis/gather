@@ -36,6 +36,7 @@ const StyledMessaging = styled.div`
       width: 12px;
       height: 12px;
       display: flex;
+      image-rendering: pixelated;
 
       align-items: center;
       justify-content: center;

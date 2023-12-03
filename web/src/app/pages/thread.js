@@ -337,7 +337,7 @@ export const Comment = ({ comment, contentOnly = false }) => {
             />
           </div>
           <div className="items">
-            <Link to={`/user/${author.slug}`}>BUDDY? IGNORE?</Link>
+            <Link to={`/buddies/${author.slug}`}>BUDDY? IGNORE?</Link>
             <Link to={`/messages/compose/${author.name}`}>SEND A MESSAGE</Link>
           </div>
         </div>
@@ -423,6 +423,10 @@ const StyledComment = styled.div`
       height: 16px;
       width: 16px;
       margin: 4px 8px 4px 0;
+
+      img {
+        image-rendering: pixelated;
+      }
     }
 
     .items {
@@ -492,6 +496,7 @@ const StyledComment = styled.div`
     .pinkie {
       vertical-align: top;
       margin: 0 1px;
+      image-rendering: pixelated;
     }
 
     blockquote {
