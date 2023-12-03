@@ -43,21 +43,17 @@ Start the parcel dev server at http://localhost:1234 by running `parcel`.
 
 ### External services
 
-Email and YH3 capabilities are only enabled once you've created the file `./api/.env` with the following contents.
+YH3 powers are only enabled once you've given `YH3_USERNAME` and `YH3_PASSWORD` environment variables. You can do this by creating a `.env` file in the root of the project with the following contents:
 
 ```
 YH3_USERNAME=...
 YH3_PASSWORD=...
 ```
 
-Emails are sent via [SES](https://aws.amazon.com/ses/)
-
 ### Production
 
 This application is hosted on AWS.
 
-#### Infrastructure
-
-- The API image is built and pushed to [ECR](https://aws.amazon.com/ecr/) and run on [ECS](https://aws.amazon.com/ecs/).
+- The API docker image is built and pushed to [ECR](https://aws.amazon.com/ecr/) then run in [ECS](https://aws.amazon.com/ecs/).
 - The web app is built and pushed to [S3](https://aws.amazon.com/s3/) and served via [CloudFront](https://aws.amazon.com/cloudfront/).
-- Storage is hosted on [RDS](https://aws.amazon.com/rds/) and [ElastiCache](https://aws.amazon.com/elasticache/).
+- Storage is Postgres in [RDS](https://aws.amazon.com/rds/) and [ElastiCache](https://aws.amazon.com/elasticache/).

@@ -1,4 +1,3 @@
-# import json
 import os
 import pickle
 import re
@@ -6,23 +5,19 @@ import ssl
 
 import click
 import requests
-from bs4 import BeautifulSoup, ResultSet
+from bs4 import BeautifulSoup
 from requests import Session
 from requests.adapters import HTTPAdapter
 from requests.packages.urllib3.util.retry import Retry
 
 requests.packages.urllib3.util.ssl_.DEFAULT_CIPHERS = "DEFAULT@SECLEVEL=1"
 
-from gather.models import Comment, Thread, User, db
 
 # "castis is the 1st member of this place and has been here since January 6 2011."
 # -> ("1", "January 6 2011")
 user_info_parser = re.compile(
     r".+ (\d+|undefined)[\w]{2}.+since (\w+ \d+ \d+)."
 )
-
-if not bool(os.environ.get("YH3_USERNAME") and os.environ.get("YH3_PASSWORD")):
-    click.echo("the fires of yh3 are not lit")
 
 
 class Singleton(type):
@@ -81,6 +76,11 @@ class YH3(metaclass=Singleton):
         session: Session = None,
         adapter: HTTPAdapter = None,
     ):
+        if not bool(
+            os.environ.get("YH3_USERNAME") and os.environ.get("YH3_PASSWORD")
+        ):
+            raise Exception("the fires of yh3 are not lit")
+
         self.session = session or Session()
         adapter = adapter or YayHoorayHTTPAdapter()
         self.session.mount("https://", adapter)

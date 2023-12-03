@@ -187,15 +187,14 @@ def update_preferences(**prefs):
 
 @api.route("html", methods=["POST"])
 @jwt_required()
-def toggle_html():
-    user = current_user
+@use_kwargs({"html": fields.Bool()})
+def toggle_html(html):
+    current_user.html = html
 
-    user.html = not user.html
-
-    db.session.add(user)
+    db.session.add(current_user)
     db.session.commit()
 
-    return dict(html=user.html), 200
+    return dict(html=current_user.html), 200
 
 
 def validate_potential_buddy(name):

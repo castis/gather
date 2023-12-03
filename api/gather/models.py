@@ -281,6 +281,7 @@ class Comment(db.Model):
     id = Column(Integer, primary_key=True)
     mongo_id = Column(String(24), unique=True)
     thread_id = Column(Integer, ForeignKey("threads.id"))
+    processed = Column(Boolean, default=False)
 
     author_id = Column(Integer, ForeignKey("users.id"))
     author = relationship("User", backref="comments")

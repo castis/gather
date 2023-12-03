@@ -102,6 +102,17 @@ def test_general(
     mock_file_io.assert_called_with("/tmp/yh3_cookiejar", "wb")
 
 
+def test_bad_env(
+    mock_session,
+    mock_adapter,
+    mock_file_io,
+):
+    Singleton._instances.clear()
+
+    with pytest.raises(Exception):
+        YH3()
+
+
 def test_messages(
     mock_session,
     mock_adapter,

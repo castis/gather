@@ -35,6 +35,7 @@ def test_s3():
         assert e.response["Error"]["Code"] == "404"
         click.echo("Successfully deleted")
 
+
 # flask test mail
 @bp.cli.command("mail")
 def test_email():
@@ -42,9 +43,9 @@ def test_email():
 
     send("castis@duckbo.at", "test subject", "test content goes here")
 
+
 @bp.cli.command("yh3")
 def test_yh3():
     from gather.legacy.services import YH3
 
-    yh3 = YH3()
-    yh3.send_message("castis", "test subject", "test content goes here")
+    YH3().send_message("castis", "test subject", "test content goes here")

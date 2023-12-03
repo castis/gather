@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useState } from "react";
 
 import classNames from "classnames";
+import { debounce } from "lodash";
 import { Link, useNavigate } from "react-router-dom";
 import { useRecoilState } from "recoil";
 import styled from "styled-components";
@@ -52,12 +53,23 @@ const Toolbar = () => {
     navigate(`/find/${form.get("query")}`);
   });
 
-  const htmlSwitch = useCallback((e) => {
-    e.preventDefault();
-    api.post("/preferences/html").then((response) => {
-      setUser({ ...user, ...response.data });
-    });
-  });
+  const actuallySetHTML = useCallback(
+    debounce((html) => {
+      api.post("/preferences/html", { html }).then((response) => {
+        setUser((user) => ({ ...user, html: response.data.html }));
+      });
+    }, 1500),
+    []
+  );
+  const htmlSwitch = useCallback(
+    (e) => {
+      e.preventDefault();
+      const html = !user.html;
+      setUser({ ...user, html });
+      actuallySetHTML(html);
+    },
+    [user.html]
+  );
 
   const toggleVisible = useCallback((e) => {
     e.preventDefault();
@@ -158,7 +170,9 @@ const Toolbar = () => {
         {user.id && (
           <div className="buddies">
             <div className="header">
-              <Link to="/buddies" className="mine">Buddies</Link>
+              <Link to="/buddies" className="mine">
+                Buddies
+              </Link>
               {/* <Link to="/users" className="all">(All Users)</Link> */}
             </div>
             <div className="subheader">
@@ -166,10 +180,7 @@ const Toolbar = () => {
             </div>
             <div className="list">
               {buddies?.online.map((buddy) => (
-                <Link
-                  key={buddy.id}
-                  to={`/user/${user.slug}`}
-                >
+                <Link key={buddy.id} to={`/user/${user.slug}`}>
                   {buddy.name}
                 </Link>
               ))}
@@ -427,7 +438,6 @@ const View = styled.div`
     display: flex;
     flex-direction: column;
     gap: 5px;
-    
 
     .header {
       display: flex;
