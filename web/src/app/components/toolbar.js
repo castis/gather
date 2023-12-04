@@ -53,12 +53,16 @@ const Toolbar = () => {
     navigate(`/find/${form.get("query")}`);
   });
 
-  const actuallySetHTML = useCallback(
-    debounce((html) => {
-      api.post("/preferences/html", { html }).then((response) => {
-        setUser((user) => ({ ...user, html: response.data.html }));
-      });
-    }, 1500),
+  const setHTMLEventually = useCallback(
+    debounce(
+      (html) =>
+        api
+          .post("/preferences/html", { html })
+          // no .then() because we don't care about the response
+          // but if it fails, we'd like to revert the change
+          .catch(() => setUser((user) => ({ ...user, html: !html }))),
+      1500
+    ),
     []
   );
   const htmlSwitch = useCallback(
@@ -66,7 +70,7 @@ const Toolbar = () => {
       e.preventDefault();
       const html = !user.html;
       setUser({ ...user, html });
-      actuallySetHTML(html);
+      setHTMLEventually(html);
     },
     [user.html]
   );

@@ -1,29 +1,19 @@
-import os
 from datetime import datetime, timezone
 
-import boto3
 from email_validator import EmailNotValidError, validate_email
-from flask import Blueprint, request
-from flask_jwt_extended import jwt_required, current_user
-from gather.config import AVATARS_LOCATION, MODE
-from gather.models import User, db
+from flask import Blueprint
+from flask_jwt_extended import current_user, jwt_required
 from gather.mail import send_email_verification_email
+from gather.models import User, db
 from gather.routes import limiter
 from gather.schemas import me_schema
+from gather.utils import allowed_mimes
 from gather.validators import password_complexity
 from marshmallow import Schema, ValidationError, fields, post_load, validate
 from webargs import ValidationError, fields, validate
 from webargs.flaskparser import use_kwargs
 
 api = Blueprint("preferences", __name__, url_prefix=f"/preferences")
-
-
-allowed_mimes = {
-    "image/gif": "gif",
-    # "image/jpeg": "jpg",
-    # "image/png": "png",
-}
-allowed_keys = list(allowed_mimes.keys())
 
 
 class PreferencesUpdateSchema(Schema):
@@ -47,7 +37,6 @@ class PreferencesUpdateSchema(Schema):
         current_password = data.get("current_password")
         new_password1 = data.get("new_password1")
         new_password2 = data.get("new_password2")
-
         del data["current_password"]
         del data["new_password1"]
         del data["new_password2"]
@@ -64,23 +53,24 @@ class PreferencesUpdateSchema(Schema):
             # if we've accumulated any errors, raise them now
             if errors:
                 raise ValidationError(errors)
-            else:
-                if not password_complexity(new_password1):
-                    raise ValidationError(
-                        {"new_password1": "not complex enough"}
-                    )
 
-                if new_password1 != new_password2:
-                    raise ValidationError(
-                        {"new_password2": "passwords must match"}
-                    )
+            if not password_complexity(new_password1):
+                raise ValidationError(
+                    {"new_password1": "not complex enough"}
+                )
 
-                if not current_user.check_password(current_password):
-                    raise ValidationError(
-                        {"current_password": "this isn't your password"}
-                    )
+            if new_password1 != new_password2:
+                raise ValidationError(
+                    {"new_password2": "passwords must match"}
+                )
 
-                data["password"] = new_password1
+            if not current_user.check_password(current_password):
+                raise ValidationError(
+                    {"current_password": "this isn't your current password"}
+                )
+
+            # password can be changed to this
+            data["password"] = new_password1
 
         return data
 
@@ -112,6 +102,16 @@ class PreferencesUpdateSchema(Schema):
         data["email"] = email
         return data
 
+def bytes_to_human(size):
+    if size < 1024:
+        return f"{size} bytes"
+    elif size < 1024 * 1024:
+        return f"{size / 1024:.2f} KB"
+    elif size < 1024 * 1024 * 1024:
+        return f"{size / 1024 / 1024:.2f} MB"
+    else:
+        return f"{size / 1024 / 1024 / 1024:.2f} GB"
+
 
 class UserAvatarUpdateSchema(Schema):
     avatar = fields.Field(required=False)
@@ -123,12 +123,14 @@ class UserAvatarUpdateSchema(Schema):
         if not avatar:
             return data
 
-        if avatar.mimetype not in allowed_keys:
+        if avatar.mimetype not in allowed_mimes:
             raise ValidationError({"avatar": "gif only for the moment"})
 
-        if (file_size := avatar.seek(0, 2)):
-            if file_size > 5 * 1024:
-                raise ValidationError({"avatar": "file size too large"})
+        if file_size := avatar.seek(0, 2):
+            if file_size > 10 * 1024:
+                readable_file_size = bytes_to_human(file_size)
+                raise ValidationError({"avatar": f"{readable_file_size} is too large"})
+            avatar.seek(0)
         else:
             raise ValidationError({"avatar": "unable to determine file size"})
 
@@ -157,21 +159,8 @@ def update_preferences(**prefs):
     if password := prefs.get("password"):
         user.set_password(password)
 
-    if (avatar := request.files.get("avatar")) and (
-        ext := allowed_mimes.get(avatar.mimetype)
-    ):
-        filename = f"{user.id}.{ext}"
-
-        if MODE == "production":
-            boto3.client("s3").upload_fileobj(
-                avatar,
-                "yayhooray-avatars",
-                filename,
-            )
-        else:
-            avatar.save(f"/static/avatars/{filename}")
-
-        user.avatar = filename
+    if avatar := prefs.get("avatar"):
+        user.set_avatar(avatar)
 
     if email := prefs.get("email"):
         user.email = email

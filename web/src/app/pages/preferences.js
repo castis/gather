@@ -4,7 +4,7 @@ import { useRecoilState } from "recoil";
 import { api } from "../api";
 import { userState } from "../atoms";
 import { Content, Skeleton, Stage, Title } from "../components/stage";
-import { useErrorHandler } from "../utils";
+import { useErrorHandler, useDocumentTitle } from "../utils";
 
 export default () => {
   const [user, setUser] = useRecoilState(userState);
@@ -12,6 +12,7 @@ export default () => {
   const [working, setWorking] = useState(false);
   const [complete, setComplete] = useState(false);
   const formRef = useRef();
+  useDocumentTitle("Preferences");
 
   const onSubmit = useCallback(
     (e) => {

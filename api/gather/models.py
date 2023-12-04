@@ -2,9 +2,11 @@ import enum
 import uuid
 from datetime import datetime
 
+import boto3
 from flask_migrate import Migrate
 from flask_sqlalchemy import SQLAlchemy
-from gather.utils import random_string
+from gather.config import MODE
+from gather.utils import allowed_mimes, random_string
 from slugify import slugify
 from sqlalchemy import (
     Boolean,
@@ -21,6 +23,7 @@ from sqlalchemy import (
     or_,
 )
 from sqlalchemy.orm import aliased, backref, relationship
+from werkzeug.datastructures import FileStorage
 from werkzeug.security import check_password_hash, generate_password_hash
 
 migrate = Migrate()
@@ -131,6 +134,26 @@ class User(db.Model):
 
     def __repr__(self):
         return f"<User {self.name}>"
+
+    # file has presumably already been validated
+    def set_avatar(self, file: FileStorage):
+        ext = allowed_mimes.get(file.mimetype)
+        if not ext:
+            raise ValueError("Invalid mimetype")
+
+        filename = f"{self.id}.{ext}"
+
+        if MODE == "production":
+            boto3.client("s3").put_object(
+                Body=file,
+                Bucket="yayhooray-avatars",
+                Key=filename,
+                ContentType=file.mimetype,
+            )
+        else:
+            file.save(f"/static/avatars/{filename}")
+
+        self.avatar = filename
 
     @staticmethod
     def generate_slug(name):

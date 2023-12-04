@@ -40,7 +40,7 @@ const useNotifier = () => {
         .post(`/threads/ping`, { slug })
         .then(handleResponse)
         .catch(handleError);
-    }, 3000);
+    }, 15000);
 
     return () => clearInterval(interval);
   }, [slug]);

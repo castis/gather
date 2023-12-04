@@ -5,7 +5,7 @@ import { Link, useSearchParams, Outlet } from "react-router-dom";
 
 import { api } from "../api";
 import { Stage, Title, Content, Skeleton, NotFound } from "../components/stage";
-import { ordinal, formatDate } from "../utils";
+import { ordinal, formatDate, useDocumentTitle } from "../utils";
 import { Comment } from "../pages/thread";
 
 const User = () => {
@@ -16,6 +16,7 @@ const User = () => {
     user: {},
     stats: {},
   });
+  useDocumentTitle(data.user?.name);
 
   useEffect(() => {
     api

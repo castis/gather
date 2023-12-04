@@ -1,5 +1,14 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { DateTime } from "luxon";
+
+const originalTitle = "Yay Hooray";
+
+export const useDocumentTitle = (title) => {
+  useEffect(() => {
+    document.title = title ? `${originalTitle} | ${title}` : originalTitle;
+    return () => (document.title = originalTitle);
+  }, [title]);
+};
 
 export const useSingleErrorHandler = () => {
   const [error, setError] = useState();

@@ -10,6 +10,13 @@ logger = LocalProxy(lambda: current_app.logger)
 
 cache = Cache()
 
+# for avatars currently
+allowed_mimes = {
+    "image/gif": "gif",
+    # "image/jpeg": "jpg",
+    # "image/png": "png",
+}
+
 
 def encode_emojis(text):
     return text.replace("[>|]", "[&gt;|]").replace("[><]", "[&gt;&lt;]")

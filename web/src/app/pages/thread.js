@@ -18,7 +18,11 @@ import useNotifier from "../components/notifier";
 import { Content, Error, Skeleton, Stage, Title } from "../components/stage";
 import { pinkies } from "../components/texteditor";
 import { avatarLocation } from "../config";
-import { loadDatetime, useSingleErrorHandler } from "../utils";
+import {
+  loadDatetime,
+  useSingleErrorHandler,
+  useDocumentTitle,
+} from "../utils";
 import { threadState, userState } from "../atoms";
 
 import p05 from "url:/src/images/pinkies/05.gif";
@@ -37,6 +41,8 @@ const Thread = () => {
   const [error, setError, handleApiError] = useSingleErrorHandler();
   const [newComments, resetNotifier, stopNotifier] = useNotifier(thread);
   const navigate = useNavigate();
+
+  useDocumentTitle(thread?.title);
 
   const slug = params.slug;
   const page = params.page || 1;

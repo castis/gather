@@ -9,16 +9,6 @@ MODE = os.environ.get("MODE", "development")
 DEBUG = os.environ.get("DEBUG", False)
 
 URL = os.environ.get("URL")
-AVATARS_LOCATION = (
-    "avatars.duckbo.at"
-    if MODE == "production"
-    else "localhost:5000/static/avatars"
-)
-IMAGES_LOCATION = (
-    "images.duckbo.at"
-    if MODE == "production"
-    else "localhost:5000/static/images"
-)
 
 SQLALCHEMY_ECHO = False
 SQLALCHEMY_TRACK_MODIFICATIONS = False
