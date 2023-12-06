@@ -1,41 +1,21 @@
 import React, { useCallback, useEffect, useState } from "react";
 import { camelCase, startCase } from "lodash";
 import { useParams } from "react-router";
-import { Link, useNavigate } from "react-router-dom";
-import {
-  atom,
-  useRecoilState,
-  useRecoilValue,
-  useSetRecoilState,
-} from "recoil";
+import { Link } from "react-router-dom";
+import { useRecoilState, useRecoilValue, useSetRecoilState } from "recoil";
 import styled from "styled-components";
 
+import { DateTime } from "luxon";
 import { api } from "../api";
-import { globalKeyState, replyTextState, userState } from "../atoms";
+import { commentsState, globalKeyState, replyTextState, threadState, userState } from "../atoms";
 import Pagination from "../components/pagination";
 import { Reply } from "../components/reply";
 import { Content, Error, Skeleton, Stage, Title } from "../components/stage";
 import { pinkies } from "../components/texteditor";
 import { avatarLocation } from "../config";
 import { loadDatetime, useErrorHandler, useSetTitle } from "../utils";
-import {
-  threadState,
-  commentsState,
-  userState,
-  globalKeyState,
-} from "../atoms";
 
 import p05 from "url:/src/images/pinkies/05.gif";
-
-const unitsMap = [
-  { unit: "years", single: "year" },
-  { unit: "months", single: "month" },
-  { unit: "weeks", single: "week" },
-  { unit: "days", single: "day" },
-  // { unit: "hours", single: "hour" },
-  // { unit: "minutes", single: "minute" },
-  // { unit: "seconds", single: "second" },
-];
 
 const units = [
   "years",
@@ -54,7 +34,9 @@ function timeDifference(start, end) {
   const output = units.reduce((acc, unit) => {
     const value = Math.round(diff.get(unit));
     if (value > 0) {
-      acc.push(`${value} ${value === 1 ? unit.slice(0, -1) : unit}`);
+      acc.push(
+        `${value.toLocaleString()} ${value === 1 ? unit.slice(0, -1) : unit}`
+      );
     }
     return acc;
   }, []);
@@ -72,7 +54,6 @@ const Thread = () => {
 
   const [working, setWorking] = useState(true);
   const [errors, setErrors, handleApiError] = useErrorHandler();
-  const navigate = useNavigate();
 
   useSetTitle((p) => `${p} - ${thread.title}`);
 
@@ -392,6 +373,7 @@ export const Comment = ({ comment, contentOnly = false }) => {
     );
   }
 
+  const createdAt = loadDatetime(comment.created_at);
   return (
     <StyledComment className="comment">
       <div className="commands">
@@ -402,8 +384,8 @@ export const Comment = ({ comment, contentOnly = false }) => {
         <Link className="name" to={`/user/${author.slug}`}>
           {author.name}
         </Link>
-        <div className="when" title={comment.created_at}>
-          {loadDatetime(comment.created_at).toRelative()}
+        <div className="when" title={createdAt.toLocaleString(DateTime.DATETIME_FULL)}>
+          {createdAt.toRelative()}
         </div>
         <div className="menu">
           <div className="icon">
