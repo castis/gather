@@ -9,7 +9,7 @@ import { api } from "../api";
 import { globalKeyState, userState } from "../atoms";
 import Pagination from "../components/pagination";
 import { Content, Skeleton, Stage, Title } from "../components/stage";
-import { loadDatetime, useSingleErrorHandler } from "../utils";
+import { loadDatetime, useErrorHandler } from "../utils";
 
 import addIcon from "url:/src/images/chrome/b-add.gif";
 import hideIcon from "url:/src/images/chrome/hide-thread.gif";
@@ -23,14 +23,14 @@ const initialTitleState = {
 const Titlematic = ({ titleState }) => {
   const [title, setTitle] = titleState;
   const [editing, setEditing] = useState(false);
-  const [error, setError, handleApiError] = useSingleErrorHandler();
+  const [errors, setErrors, handleApiError] = useErrorHandler("title");
   const user = useRecoilValue(userState);
 
   const start = useCallback(() => {
     if (user?.privileged) setEditing(true);
   });
   const cancel = useCallback(() => {
-    setError(undefined);
+    setErrors({});
     setEditing(false);
   });
 
@@ -66,7 +66,7 @@ const Titlematic = ({ titleState }) => {
           />
           <button type="submit">Save</button>
           <button onClick={cancel}>Cancel</button>
-          {error?.title && <div className="error">{error.title}</div>}
+          {errors?.title && <div className="error">{errors.title}</div>}
         </form>
       </Title>
     );
@@ -98,11 +98,15 @@ const paramsToURL = (params, exclude = []) => {
   return url;
 };
 
+const InlineError = ({ errors }) => {
+  return <div className="error">{error}</div>;
+};
+
 const Threads = () => {
   const params = useParams();
   const user = useRecoilValue(userState);
   const globalKey = useRecoilValue(globalKeyState);
-  const [error, setError] = useState();
+  const [errors, setErrors, handleApiError] = useErrorHandler();
 
   const titleState = useState(initialTitleState);
   const [title, setTitle] = titleState;
@@ -142,7 +146,7 @@ const Threads = () => {
           perPage: data.threads.per_page,
         });
       })
-      .catch((err) => setError(err.message))
+      .catch(handleApiError)
       .finally(() => setWorking(false));
   }, [globalKey, page, type, identifier, query, sort, sortDir]);
 
@@ -184,6 +188,7 @@ const Threads = () => {
       )}
       <Content>
         {paging}
+        {errors.global && <div className="error">{errors.global}</div>}
         <Outlet />
         <StyledThreads>
           <div className="header">

@@ -4,7 +4,7 @@ import { useRecoilState } from "recoil";
 import { api } from "../api";
 import { userState } from "../atoms";
 import { Content, Skeleton, Stage, Title } from "../components/stage";
-import { useErrorHandler, useDocumentTitle } from "../utils";
+import { useErrorHandler, useSetTitle } from "../utils";
 
 export default () => {
   const [user, setUser] = useRecoilState(userState);
@@ -12,7 +12,7 @@ export default () => {
   const [working, setWorking] = useState(false);
   const [complete, setComplete] = useState(false);
   const formRef = useRef();
-  useDocumentTitle("Preferences");
+  useSetTitle((p) => `${p} - Preferences`);
 
   const onSubmit = useCallback(
     (e) => {
@@ -61,15 +61,15 @@ export default () => {
             <p className="success">Your preferences have been saved</p>
           )}
           {Object.keys(errors).length > 0 && (
-            <p className="error">There were some problems saving your changes</p>
+            <p className="error">
+              There were some problems saving your changes
+            </p>
           )}
           {errors?.global && <div className="error">{errors.global}</div>}
 
           <header>
             <h3>Account Stuff</h3>
-            <button type="submit">
-              {working ? "Saving..." : "Save"}
-            </button>
+            <button type="submit">{working ? "Saving..." : "Save"}</button>
           </header>
 
           <div className="field">
@@ -90,28 +90,32 @@ export default () => {
           <div className="field">
             <label htmlFor="password">Original Password</label>
             <input id="password" type="password" name="current_password" />
-            {errors?.current_password && <div className="error">{errors.current_password}</div>}
+            {errors?.current_password && (
+              <div className="error">{errors.current_password}</div>
+            )}
           </div>
 
           <div className="field">
             <label htmlFor="new_password1">New Password</label>
             <input id="new_password1" type="password" name="new_password1" />
-            {errors?.new_password1 && <div className="error">{errors.new_password1}</div>}
+            {errors?.new_password1 && (
+              <div className="error">{errors.new_password1}</div>
+            )}
           </div>
 
           <div className="field">
             <label htmlFor="new_password2">Confirm New Password</label>
             <input id="new_password2" type="password" name="new_password2" />
-            {errors?.new_password2 && <div className="error">{errors.new_password2}</div>}
+            {errors?.new_password2 && (
+              <div className="error">{errors.new_password2}</div>
+            )}
           </div>
 
           <div className="blueline" />
 
           <header>
             <h3>Personal Stuff</h3>
-            <button type="submit">
-              {working ? "Saving..." : "Save"}
-            </button>
+            <button type="submit">{working ? "Saving..." : "Save"}</button>
           </header>
 
           <div className="field">
@@ -143,9 +147,7 @@ export default () => {
 
           <header>
             <h3>Internet Stuff</h3>
-            <button type="submit">
-              {working ? "Saving..." : "Save"}
-            </button>
+            <button type="submit">{working ? "Saving..." : "Save"}</button>
           </header>
 
           <div className="field">

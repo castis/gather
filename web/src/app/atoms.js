@@ -23,6 +23,7 @@ export const initialUser = {
   theme: "light",
   random_titles: false,
   privileged: false,
+  html: true,
 };
 
 export const buddiesState = atom({
@@ -41,4 +42,13 @@ export const userState = atom({
 export const threadState = atom({
   key: "thread",
   default: {},
+});
+
+export const commentsState = atom({
+  key: "comments",
+  default: {
+    items: [],
+    total: 0,
+    perPage: 25,
+  },
 });

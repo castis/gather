@@ -11,77 +11,93 @@ import {
 import styled from "styled-components";
 
 import { api } from "../api";
-import { replyTextState, userState } from "../atoms";
+import { globalKeyState, replyTextState, userState } from "../atoms";
 import Pagination from "../components/pagination";
 import { Reply } from "../components/reply";
-import useNotifier from "../components/notifier";
 import { Content, Error, Skeleton, Stage, Title } from "../components/stage";
 import { pinkies } from "../components/texteditor";
 import { avatarLocation } from "../config";
+import { loadDatetime, useErrorHandler, useSetTitle } from "../utils";
 import {
-  loadDatetime,
-  useSingleErrorHandler,
-  useDocumentTitle,
-} from "../utils";
-import { threadState, userState } from "../atoms";
+  threadState,
+  commentsState,
+  userState,
+  globalKeyState,
+} from "../atoms";
 
 import p05 from "url:/src/images/pinkies/05.gif";
 
+const unitsMap = [
+  { unit: "years", single: "year" },
+  { unit: "months", single: "month" },
+  { unit: "weeks", single: "week" },
+  { unit: "days", single: "day" },
+  // { unit: "hours", single: "hour" },
+  // { unit: "minutes", single: "minute" },
+  // { unit: "seconds", single: "second" },
+];
+
+const units = [
+  "years",
+  "months",
+  "weeks",
+  "days",
+  // "hours",
+  // "minutes",
+  // "seconds",
+];
+
+function timeDifference(start, end) {
+  let diff = end.diff(start);
+  if (diff.as("hours") < 12) return;
+  diff = diff.shiftTo(...units);
+  const output = units.reduce((acc, unit) => {
+    const value = Math.round(diff.get(unit));
+    if (value > 0) {
+      acc.push(`${value} ${value === 1 ? unit.slice(0, -1) : unit}`);
+    }
+    return acc;
+  }, []);
+
+  if (output.length > 0) return output.join(", ") + " later";
+}
+
 const Thread = () => {
   const params = useParams();
+
+  const globalKey = useRecoilValue(globalKeyState);
   const user = useRecoilValue(userState);
   const [thread, setThread] = useRecoilState(threadState);
-  const [resetKey, setResetKey] = useState();
-  const [comments, setComments] = useState({
-    items: [],
-    total: 0,
-    perPage: 25,
-  });
+  const [comments, setComments] = useRecoilState(commentsState);
+
   const [working, setWorking] = useState(true);
-  const [error, setError, handleApiError] = useSingleErrorHandler();
-  const [newComments, resetNotifier, stopNotifier] = useNotifier(thread);
+  const [errors, setErrors, handleApiError] = useErrorHandler();
   const navigate = useNavigate();
 
-  useDocumentTitle(thread?.title);
+  useSetTitle((p) => `${p} - ${thread.title}`);
 
   const slug = params.slug;
   const page = params.page || 1;
 
-  const setThreadInfo = useCallback(({ data }) => {
-    setThread(data.thread);
-    setComments({
-      ...data.comments,
-      perPage: data.comments.per_page,
-    });
-    resetNotifier();
-  });
-
   useEffect(() => {
     setWorking(true);
-    setError(null);
+    setErrors({});
 
     api
       .get(`/threads/detail`, { params: { slug, page } })
-      .then(setThreadInfo)
+      .then(({ data }) => {
+        setThread(data.thread);
+        setComments(data.comments);
+      })
       .catch(handleApiError)
       .finally(() => setWorking(false));
-  }, [resetKey]);
+  }, [globalKey, slug, page]);
 
-  const onUpdateData = useCallback(({ data }) => {
-    if (data.comments.page != page) {
-      navigate(`/thread/${data.thread.slug}/${data.comments.page}#bottom`);
-    } else {
-      setThreadInfo({ data });
-    }
-  });
-
-  const reloadThread = useCallback(() => setResetKey(Date.now()));
-
-  if (error) {
-    return <Error message={error} />;
+  if (errors?.global) {
+    return <Error title="There's not much to see here" errors={errors} />;
   }
 
-  if (working) {
+  if (working || !thread?.id) {
     return <Skeleton />;
   }
 
@@ -106,18 +122,28 @@ const Thread = () => {
       <StyledThread>
         {paging}
         <div className="comments">
-          {comments?.items?.map((comment, i) => (
-            <Comment key={i} thread={thread} comment={comment} />
-          ))}
+          {comments?.items?.map((comment, i) => {
+            const nextComment = comments.items[i + 1];
+            const timeDiffMessage = nextComment
+              ? timeDifference(
+                  loadDatetime(comment.created_at),
+                  loadDatetime(nextComment.created_at)
+                )
+              : null;
+
+            return (
+              <React.Fragment key={comment.id}>
+                <Comment comment={comment} />
+                {timeDiffMessage && (
+                  <div className="time-difference">{timeDiffMessage}</div>
+                )}
+              </React.Fragment>
+            );
+          })}
         </div>
         {paging}
-        <Reply thread={thread} onUpdateData={onUpdateData} />
-        {newComments > 0 && (
-          <div className="new-comments" onClick={reloadThread}>
-            {newComments} new comment{newComments > 1 ? "s" : ""} added
-            <div className="close" onClick={() => stopNotifier()}></div>
-          </div>
-        )}
+
+        <Reply />
       </StyledThread>
     </Stage>
   );
@@ -149,24 +175,69 @@ const StyledThread = styled(Content)`
     }
   }
 
+  .time-difference {
+    border-bottom: solid 1px #ccc;
+    text-align: center;
+    font-size: 9px;
+    padding: 2px;
+    color: #aaa;
+    background: #eee;
+  }
+
   .reply-form {
     margin-top: 15px;
   }
 
+  .closed {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 5px;
+
+    margin-top: 15px;
+    padding: 15px;
+
+    background: #ffeaea;
+    color: #8a8a8a;
+    font-size: 12px;
+
+    img {
+      height: 16px;
+      width: 16px;
+      image-rendering: pixelated;
+    }
+  }
+
   .new-comments {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
     position: fixed;
     left: 25px;
     bottom: 25px;
-    background: #fef6e9;
     padding: 10px;
     width: 200px;
 
-    cursor: pointer;
-    font-size: 12px;
-    color: #fff;
+    border: 3px solid #fff;
+    font-size: 11px;
+    background: #fef6ea;
 
-    &:hover {
-      background: #ffaeae;
+    a {
+      text-decoration: underline;
+      color: #545454;
+      cursor: pointer;
+      font-size: 12px;
+      margin: 0 auto 0 10px;
+
+      &:hover {
+        color: #fef6ea;
+        background: #545454;
+      }
+    }
+
+    .close {
+      cursor: pointer;
     }
   }
 `;
@@ -255,7 +326,7 @@ const Admin = () => {
   return (
     <ul className="admin">
       <li className="cta" onClick={toggleNaughty}>
-        {thread.nsfw ? "Unm" : "M"}ark Naughty
+        Mark {thread.nsfw ? "Safe" : "Naughty"}
       </li>
       <li className="cta" onClick={toggleEnabled}>
         {thread.enabled ? "Close" : "Open"} Thread

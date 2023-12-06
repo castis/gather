@@ -15,17 +15,13 @@ const useNotifier = () => {
 
   const handleResponse = useCallback(
     ({ data }) => {
-      if (data?.comments?.total > comment_count) {
-        setNewCount(data.comments.total - comment_count);
+      // if data is a number and it's greater than the current comment count
+      if (typeof data === "number" && data > comment_count) {
+        setNewCount(data - comment_count);
       }
     },
     [comment_count]
   );
-
-  const handleError = useCallback((error) => {
-    // console.error(error);
-    stop();
-  }, []);
 
   const reset = useCallback(() => setNewCount(0));
 
@@ -39,7 +35,7 @@ const useNotifier = () => {
       api
         .post(`/threads/ping`, { slug })
         .then(handleResponse)
-        .catch(handleError);
+        .catch(stop);
     }, 15000);
 
     return () => clearInterval(interval);

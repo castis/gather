@@ -61,7 +61,7 @@ const shortcuts = {
   Snigger: ["<snigger />"],
 };
 
-export const TextEditor = ({ working, className }) => {
+export const TextEditor = ({ working, className, errors }) => {
   const user = useRecoilValue(userState);
   const [text, setText] = useRecoilState(replyTextState);
   const [caret, setCaret] = useState(0);
@@ -119,7 +119,7 @@ export const TextEditor = ({ working, className }) => {
   useEffect(() => {
     if (window.location.hash == "#bottom" && textareaRef?.current) {
       textareaRef.current.scrollIntoView({
-        behavior: "smooth",
+        behavior: "instant",
         block: "center",
       });
     }
@@ -158,7 +158,8 @@ export const TextEditor = ({ working, className }) => {
           />
           <img src={benice} title="OR ELSE" />
         </div>
-        <p className="">
+        {errors?.content && <div className="error">{errors.content}</div>}
+        <p>
           I, {user.name}, do solemnly swear that in posting this comment I
           promise to be nice.
         </p>
@@ -293,6 +294,12 @@ const StyledTextEditor = styled.div`
         border-color: #ff9898;
         outline: none;
       }
+    }
+    
+    .error {
+      color: #e95e6e;
+      font-size: 10px;
+      margin: 0 0 10px;
     }
 
     .commands {

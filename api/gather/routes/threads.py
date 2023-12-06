@@ -21,15 +21,37 @@ from webargs.flaskparser import use_kwargs
 api = Blueprint("threads", __name__, url_prefix=f"/threads")
 
 
+parser = html5lib.HTMLParser(
+    namespaceHTMLElements=False,
+    strict=True,
+)
+
+allowed_tags = (
+    "a",
+    "blockquote",
+    "code",
+    "img",
+    "p",
+    "snigger",
+    "spoiler",
+)
+
+
 def validate_fragment(text):
+    if not text:
+        raise ValidationError("empty response")
+    
+    if len(text) > 2500:
+        raise ValidationError("2500 is the limit")
+
     try:
         document = parser.parseFragment(encode_emojis(text))
     except html5lib.html5parser.ParseError:
-        raise ValidationError("Invalid HTML fragment")
+        raise ValidationError("invalid html fragment")
 
     for element in document.findall(".//"):
         if element.tag not in allowed_tags:
-            raise ValidationError("Bad HTML fragment")
+            raise ValidationError(f"{element.tag} not allowed")
 
 
 def validate_category(category):
@@ -262,7 +284,7 @@ def thread_detail(thread, page):
 @api.route("ping", methods=["POST"])
 @jwt_required()
 @limiter.limit("5 per minute")
-@cache.cached(timeout=25)
+@cache.cached(timeout=60)
 @use_kwargs({"slug": fields.Str(required=True)})
 def thread_ping(slug):
     thread = Thread.query.filter_by(slug=slug).first()
@@ -270,13 +292,9 @@ def thread_ping(slug):
     if not thread:
         return "Thread not found", 404
 
-    count = Comment.query.filter(Comment.thread == thread).count()
-
     return {
-        "thread": thread_schema.dump(thread),
-        "comments": {
-            "total": count,
-        },
+        # "thread": thread_schema.dump(thread),
+        "comments": Comment.query.filter(Comment.thread == thread).count(),
     }, 200
 
 
@@ -312,22 +330,6 @@ def thread_ping(slug):
 #             for (dt, c) in response.fetchall()
 #         ],
 #     }, 200
-
-
-allowed_tags = [
-    "a",
-    "blockquote",
-    "code",
-    "img",
-    "p",
-    "snigger",
-    "spoiler",
-]
-
-parser = html5lib.HTMLParser(
-    namespaceHTMLElements=False,
-    strict=True,
-)
 
 
 @api.route("detail", methods=["POST"])

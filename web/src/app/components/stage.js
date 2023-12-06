@@ -74,7 +74,7 @@ export const Content = styled.div`
     font-size: 12px;
 
     &.pink {
-      color: #ED135A;
+      color: #ed135a;
     }
   }
 
@@ -144,7 +144,7 @@ export const Content = styled.div`
       grid-template-columns: 50% 50%;
       align-items: start;
       min-height: 20px;
-      
+
       width: 100%;
       max-width: 400px;
 
@@ -152,7 +152,8 @@ export const Content = styled.div`
         margin: 3px 5px 0 0;
       }
 
-      select, input[type="checkbox"] {
+      select,
+      input[type="checkbox"] {
         margin: auto auto auto 0;
       }
 
@@ -177,7 +178,7 @@ export const Content = styled.div`
         border: solid 1px #8f8f9d;
         border-radius: 2px;
         padding: 2px 3px;
-  
+
         &:focus {
           border-color: #ff9898;
           outline: none;
@@ -196,22 +197,15 @@ export const Content = styled.div`
         gap: 10px;
 
         .choice {
-            
         }
       }
     }
-  }
-
-  .pagination:last-of-type {
-    padding-bottom: 16px;
   }
 `;
 
 export const NotFound = () => (
   <StyledSkeleton>
-    <Title>
-      Not found
-    </Title>
+    <Title>Not found</Title>
     <Content>
       <p>
         If you're lost, try <Link to="/">going home</Link>.
@@ -222,9 +216,7 @@ export const NotFound = () => (
 
 export const NotAllowed = () => (
   <StyledSkeleton>
-    <Title>
-      Not allowed
-    </Title>
+    <Title>Not allowed</Title>
     <Content>
       <p>
         If you're lost, try <Link to="/">going home</Link>.
@@ -233,27 +225,44 @@ export const NotAllowed = () => (
   </StyledSkeleton>
 );
 
-export const Error = ({ message }) => {
+export const Error = ({ title, errors }) => {
   return (
     <StyledSkeleton>
-      <Title>
-        Error
-      </Title>
-      <Content>
-        <p>{message}</p>
-      </Content>
+      <Title>{title || "This is the error page"}</Title>
+      <StyledErrorContent>
+        <p>Something in the response said:</p>
+        <ul className="errors">
+          {Object.keys(errors).map((key) => (
+            <li key={key}>{errors[key]}</li>
+          ))}
+        </ul>
+      </StyledErrorContent>
     </StyledSkeleton>
   );
 };
+const StyledErrorContent = styled(Content)`
+  p {
+    margin: 0;
+    padding: 0;
+  }
+  .errors {
+    margin: 0;
+    font-size: 12px;
 
+    li {
+      // margin: 0;
+      padding: 0;
 
-
-
-
+      color: #e95e6e;
+    }
+  }
+`;
 
 export const Skeleton = () => {
   const [isVisible, setIsVisible] = useState(false);
 
+  // dont show this immediately
+  // otherwise it looks like a flash of content
   useEffect(() => {
     const timer = setTimeout(() => {
       setIsVisible(true);
@@ -293,11 +302,26 @@ const StyledSkeleton = styled(Stage)`
     background-size: 200% 100%;
     animation: shimmer 1s infinite linear;
 
-    &:nth-child(2) { animation-delay: 0s; animation-duration: 0.8s; }
-    &:nth-child(4) { animation-delay: 0.1s; animation-duration: 0.9s; }
-    &:nth-child(1) { animation-delay: 0.2s; animation-duration: 1.0s; }
-    &:nth-child(5) { animation-delay: 0.3s; animation-duration: 1.1s; }
-    &:nth-child(3) { animation-delay: 0.4s; animation-duration: 1.2s; }
+    &:nth-child(2) {
+      animation-delay: 0s;
+      animation-duration: 0.8s;
+    }
+    &:nth-child(4) {
+      animation-delay: 0.1s;
+      animation-duration: 0.9s;
+    }
+    &:nth-child(1) {
+      animation-delay: 0.2s;
+      animation-duration: 1s;
+    }
+    &:nth-child(5) {
+      animation-delay: 0.3s;
+      animation-duration: 1.1s;
+    }
+    &:nth-child(3) {
+      animation-delay: 0.4s;
+      animation-duration: 1.2s;
+    }
   }
 
   ${Title} {

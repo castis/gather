@@ -15,8 +15,8 @@ limiter = Limiter(
     default_limits=[
         "3000 per day",
         "300 per hour",  # Helps prevent long-term abuse
-        "20 per minute",  # Reasonable for active participation
-        "5 per second",  # Prevents rapid-fire requests
+        "50 per minute",  # Reasonable for active participation
+        "10 per second",  # Prevents rapid-fire requests
     ],
 )
 

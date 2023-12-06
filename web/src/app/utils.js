@@ -1,36 +1,28 @@
-import React, { useState, useEffect } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import { DateTime } from "luxon";
 
-const originalTitle = "Yay Hooray";
+// can useSetTitle("new title") or useSetTitle((oldTitle) => `${oldTitle} - new title`)
+// you can also
+// const setTitle = useSetTitle();
+// and then setTitle("new title") or setTitle((oldTitle) => `${oldTitle} - new title`)
+// as many times as you want and the title will reset on unmount
+export const useSetTitle = (initialUpdate) => {
+  const originalTitle = useRef(document.title);
 
-export const useDocumentTitle = (title) => {
+  const updateTitle = useCallback((newTitle) => {
+    document.title =
+      typeof newTitle === "function"
+        ? newTitle(originalTitle.current)
+        : newTitle;
+  }, []);
+
   useEffect(() => {
-    document.title = title ? `${originalTitle} | ${title}` : originalTitle;
-    return () => (document.title = originalTitle);
-  }, [title]);
-};
+    if (initialUpdate) updateTitle(initialUpdate);
+    // when the component unmounts, reset the title
+    return () => (document.title = originalTitle.current);
+  }, [initialUpdate, updateTitle]);
 
-export const useSingleErrorHandler = () => {
-  const [error, setError] = useState();
-
-  const handleApiError = (error) => {
-    console.error(error);
-    const { response } = error;
-
-    if (response?.status === 401) {
-      setError("Not allowed");
-    } else if (response?.status === 403) {
-      setError("Banned");
-    } else if (response?.status === 422) {
-      setError(response.data?.json || response.data?.form);
-    } else if (response?.status === 429) {
-      setError(response?.data || "Too many requests");
-    } else {
-      setError("Something didn't go right");
-    }
-  };
-
-  return [error, setError, handleApiError];
+  return updateTitle;
 };
 
 export const useErrorHandler = (defaultFieldName = "global") => {
@@ -54,7 +46,7 @@ export const useErrorHandler = (defaultFieldName = "global") => {
     } else if (response?.status === 429) {
       setErrors({ [defaultFieldName]: response?.data || "Too many requests" });
     } else {
-      setErrors({ [defaultFieldName]: "Something didn't go right" });
+      setErrors({ [defaultFieldName]: "an error occurred" });
     }
   };
 
@@ -64,10 +56,10 @@ export const useErrorHandler = (defaultFieldName = "global") => {
 export const loadDatetime = (ISO8601) =>
   DateTime.fromISO(ISO8601, { zone: "UTC" });
 
-export const ordinal = (n) => {
-  const s = ["th", "st", "nd", "rd"],
-    v = n % 100;
-  return n + (s[(v - 20) % 10] || s[v] || s[0]);
+const suffixes = ["th", "st", "nd", "rd"];
+export const ordinal = (num) => {
+  const val = num % 100;
+  return num + (suffixes[(val - 20) % 10] || suffixes[val] || suffixes[0]);
 };
 
 // 2023-11-08T12:31:10.140428 to "January 6th 2011"

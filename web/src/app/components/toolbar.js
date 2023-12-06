@@ -13,6 +13,40 @@ import Messaging from "./messaging";
 
 import logo from "/src/images/chrome/logo.svg";
 
+const HTMLSwitch = () => {
+  const [{ html }, setUser] = useRecoilState(userState);
+
+  const setHTMLEventually = useCallback(
+    debounce(
+      (desiredState) => {
+        if (html === desiredState) return;
+        api
+          .post("/preferences/html", { html: desiredState })
+          // no .then() because we don't care about the response
+          // but if it fails, we'd like to revert the change
+          .catch(() => setUser((user) => ({ ...user, html: !desiredState })))
+      },
+      1500
+    ),
+    []
+  );
+
+  const htmlSwitch = useCallback(
+    (e) => {
+      e.preventDefault();
+      setUser((user) => ({ ...user, html: !html }));
+      setHTMLEventually(!html);
+    },
+    [html]
+  );
+
+  return (
+    <div className="html-switch">
+      <a onClick={htmlSwitch}>Turn {html ? "Off" : "On"} HTML</a>
+    </div>
+  );
+};
+
 const Toolbar = () => {
   const [user, setUser] = useRecoilState(userState);
   const [buddies, setBuddies] = useRecoilState(buddiesState);
@@ -52,28 +86,6 @@ const Toolbar = () => {
     const form = new FormData(e.target);
     navigate(`/find/${form.get("query")}`);
   });
-
-  const setHTMLEventually = useCallback(
-    debounce(
-      (html) =>
-        api
-          .post("/preferences/html", { html })
-          // no .then() because we don't care about the response
-          // but if it fails, we'd like to revert the change
-          .catch(() => setUser((user) => ({ ...user, html: !html }))),
-      1500
-    ),
-    []
-  );
-  const htmlSwitch = useCallback(
-    (e) => {
-      e.preventDefault();
-      const html = !user.html;
-      setUser({ ...user, html });
-      setHTMLEventually(html);
-    },
-    [user.html]
-  );
 
   const toggleVisible = useCallback((e) => {
     e.preventDefault();
@@ -165,11 +177,7 @@ const Toolbar = () => {
             </form>
           )}
 
-          {user.id && (
-            <div className="html-switch">
-              <a onClick={htmlSwitch}>Turn {user.html ? "Off" : "On"} HTML</a>
-            </div>
-          )}
+          {user.id && <HTMLSwitch />}
         </div>
         {user.id && (
           <div className="buddies">
@@ -191,6 +199,10 @@ const Toolbar = () => {
             </div>
           </div>
         )}
+
+        <div className="source">
+          <a href="https://github.com/castis/gather">source</a>
+        </div>
       </div>
     </View>
   );
@@ -491,6 +503,17 @@ const View = styled.div`
           color: #fff;
         }
       }
+    }
+  }
+
+  .source {
+    padding: 10px;
+    font-size: 10px;
+    text-align: center;
+
+    a {
+      color: #D3D3D3;
+      text-decoration: none;
     }
   }
 `;

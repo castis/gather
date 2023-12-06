@@ -80,10 +80,10 @@ const PaginationView = styled.div`
   height: 28px;
 
   font-size: 8px;
-  padding: 0 0 10px;
+  padding: 16px 0;
 
-  &:last-of-type {
-    padding-top: 16px;
+  &:first-of-type {
+    padding-top: 0;
   }
 
   border-bottom: 1px dotted #959595;

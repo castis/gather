@@ -5,8 +5,19 @@ import { api } from "../../api";
 import { Stage, Title, Content } from "../../components/stage";
 import styled from "styled-components";
 import { Link } from "react-router-dom";
+import { useSetTitle } from "../../utils";
+
+const BoxMessage = ({ message }) => {
+  return (
+    <div key={message.id} className="message">
+      <Link to={`/messages/message/${message.slug}`}>{message.title}</Link>
+    </div>
+  );
+};
 
 const Box = ({ path }) => {
+  useSetTitle((p) => `${p} - Messages`);
+
   const [messages, setMessages] = useState({
     items: [],
     total: 0,
@@ -38,23 +49,13 @@ const Box = ({ path }) => {
             New Message
           </Link>
         </div>
-        <div className="controls2">
-          <Link to="/messages/inbox">
-            Inbox (0)
-          </Link>
-          <Link to="/messages/sent">
-            Sent Items
-          </Link>
+        <div className="boxes">
+          <Link to="/messages/inbox">Inbox (0)</Link>|
+          <Link to="/messages/sent">Sent Items</Link>
         </div>
-        {messages.items.map((message) => {
-          return (
-            <div key={message.id} className="message">
-              <Link to={`/messages/message/${message.slug}`}>
-                {message.title}
-              </Link>
-            </div>
-          );
-        })}
+        {messages.items.map((message) => (
+          <BoxMessage key={message.slug} message={message} />
+        ))}
       </StyledContent>
     </Stage>
   );
@@ -82,6 +83,16 @@ const StyledContent = styled(Content)`
         background-color: #494949;
         color: #e6f7fe;
       }
+    }
+  }
+
+  .boxes {
+    background: #ffeaea;
+    padding: 6px;
+
+    a {
+      color: #494949;
+      font-size: 11px;
     }
   }
 `;
