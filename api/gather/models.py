@@ -1,8 +1,10 @@
 import enum
+import os
 import uuid
 from datetime import datetime
 
 import boto3
+from cryptography.fernet import Fernet
 from flask_migrate import Migrate
 from flask_sqlalchemy import SQLAlchemy
 from gather.config import MODE
@@ -25,10 +27,15 @@ from sqlalchemy import (
 from sqlalchemy.orm import aliased, backref, relationship
 from werkzeug.datastructures import FileStorage
 from werkzeug.security import check_password_hash, generate_password_hash
+from sqids import Sqids
 
 migrate = Migrate()
 db = SQLAlchemy(session_options={"autocommit": False})
 meta = MetaData()
+fernet = Fernet(os.environ.get("FERNET_KEY"))
+sqids = Sqids(
+    alphabet="3dNlJIYhgC5XoqADVyZRmWi2p9OvfKT8GzsbrnHj7teMB6k4wQaxF1EPSU0ucL"
+)
 
 
 class RelationshipType(enum.Enum):
@@ -51,6 +58,7 @@ user_relationship = Table(
 class User(db.Model):
     __tablename__ = "users"
     id = Column(Integer, primary_key=True)
+    email = Column(String(255), unique=True)
     legacy_order = Column(Integer, unique=True)
     name = Column(String(32), unique=True, nullable=False)
     slug = Column(String(32), unique=True, nullable=False)
@@ -63,20 +71,6 @@ class User(db.Model):
     password_hash = Column(String(255))
     password_reset_token = Column(String(64), unique=True)
     password_reset_sent_at = Column(DateTime)
-
-    inbox = relationship(
-        "DirectThread",
-        backref="recipient",
-        lazy="dynamic",
-        foreign_keys="DirectThread.recipient_id",
-    )
-
-    outbox = relationship(
-        "DirectThread",
-        backref="author",
-        lazy="dynamic",
-        foreign_keys="DirectThread.author_id",
-    )
 
     # able to change title, use new post notifier, etc
     privileged = Column(Boolean, default=True)
@@ -119,8 +113,6 @@ class User(db.Model):
     )
 
     votes = relationship("ApplicationVote", back_populates="user")
-    # direct_threads = relationship("DirectThread", back_populates="author")
-    # direct_comments = relationship("DirectComment", back_populates="author")
 
     def set_password(self, password):
         self.password_hash = generate_password_hash(password)
@@ -355,48 +347,53 @@ class Comment(db.Model):
 # )
 
 
-class DirectThread(db.Model):
-    __tablename__ = "direct_threads"
+class DirectMessage(db.Model):
+    __tablename__ = "direct_messages"
     id = Column(Integer, primary_key=True)
-    title = Column(String(128))
     slug = Column(String(128), unique=True, index=True)
+    encrypted = Column(Boolean, default=False)
 
     author_id = Column(Integer, ForeignKey("users.id"))
-    # author = relationship("User", backref="outbox")
+    author = relationship("User", backref="outbox", foreign_keys=[author_id])
+    author_deleted_at = Column(DateTime)
 
     recipient_id = Column(Integer, ForeignKey("users.id"))
-    # recipient = relationship("User", backref="inbox")
+    recipient = relationship("User", backref="inbox", foreign_keys=[recipient_id])
+    recipient_deleted_at = Column(DateTime)
 
-    comments = relationship("DirectComment", backref="thread")
-
-    created_at = Column(DateTime, default=datetime.now)
-    updated_at = Column(DateTime, default=datetime.now, onupdate=datetime.now)
-
-    def __repr__(self):
-        return f"<DirectThread {self.title}>"
-
-    @staticmethod
-    def generate_slug():
-        slug = str(uuid.uuid4())
-        while DirectThread.query.filter_by(slug=slug).first():
-            slug = str(uuid.uuid4())
-        return slug
-
-
-class DirectComment(db.Model):
-    __tablename__ = "direct_comments"
-    id = Column(Integer, primary_key=True)
-
-    author_id = Column(Integer, ForeignKey("users.id"))
-    author = relationship("User", backref="direct_comments")
-
-    thread_id = Column(Integer, ForeignKey("direct_threads.id"))
-
-    content = Column(Text())
-    read = Column(Boolean, default=False)
+    _title = Column(String(128))
+    _content = Column(Text())
+    read_at = Column(DateTime)
 
     created_at = Column(DateTime, default=datetime.now)
     updated_at = Column(DateTime, default=datetime.now, onupdate=datetime.now)
 
     def __repr__(self):
-        return f"<DirectComment {self.id}>"
+        return f"<DirectMessage {self.id}>"
+
+    def encrypt(self, text: str) -> str:
+        # if self.encrypted:
+        #     assert isinstance(text, str)
+        #     return fernet.encrypt(text.encode()).decode()
+        return text
+
+    def decrypt(self, text: str) -> str:
+        # if self.encrypted:
+        #     return fernet.decrypt(text)
+        return text
+
+    @property
+    def content(self) -> str:
+        return self.decrypt(self._content)
+
+    @content.setter
+    def content(self, message: str) -> None:
+        self._content = self.encrypt(message)
+
+    @property
+    def title(self) -> str:
+        return self.decrypt(self._title)
+
+    @title.setter
+    def title(self, title: str) -> None:
+        self._title = self.encrypt(title)

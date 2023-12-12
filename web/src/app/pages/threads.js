@@ -1,9 +1,16 @@
 import classnames from "classnames";
-import React, { useCallback, useEffect, useMemo, useState } from "react";
+import React, {
+  Fragment,
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
 import { useParams } from "react-router";
 import { Link, Outlet } from "react-router-dom";
 import { useRecoilValue } from "recoil";
 import styled from "styled-components";
+import { DateTime } from "luxon";
 
 import { api } from "../api";
 import { globalKeyState, userState } from "../atoms";
@@ -96,10 +103,6 @@ const paramsToURL = (params, exclude = []) => {
   }
 
   return url;
-};
-
-const InlineError = ({ errors }) => {
-  return <div className="error">{error}</div>;
 };
 
 const Threads = () => {
@@ -203,33 +206,35 @@ const Threads = () => {
               <Sorter field="posts">Posts</Sorter>
             </div>
           </div>
-          {threads.items
-            .map((thread) => {
-              const {
-                slug,
-                category,
-                comment_count,
-                created_at,
-                updated_at,
-                author,
-                last_author,
-              } = thread;
+          {threads.items.map((thread) => {
+            const {
+              slug,
+              category,
+              comment_count,
+              created_at,
+              updated_at,
+              author,
+              last_author,
+            } = thread;
 
-              let totalPages = Math.ceil(
-                comment_count / user.comments_per_page
-              );
-              let pages = [];
-              if (totalPages >= 5) {
-                pages = [1, 2, "", totalPages - 1, totalPages];
-              } else {
-                for (let i = 1; i <= totalPages; i++) {
-                  pages.push(i);
-                }
+            const totalPages = Math.ceil(
+              comment_count / user.comments_per_page
+            );
+            let pages = [];
+            if (totalPages >= 5) {
+              pages = [1, 2, "", totalPages - 1, totalPages];
+            } else {
+              for (let i = 1; i <= totalPages; i++) {
+                pages.push(i);
               }
+            }
 
-              return (
+            const createdAt = loadDatetime(created_at);
+            const updatedAt = loadDatetime(updated_at);
+
+            return (
+              <Fragment key={thread.id}>
                 <div
-                  key={thread.id}
                   className={classnames({
                     thread: true,
                     nsfw: thread.nsfw,
@@ -274,31 +279,38 @@ const Threads = () => {
                     <Link className="name" to={`/user/${author.slug}`}>
                       {author.name}
                     </Link>
-                    <div className="meta" title={created_at}>
-                      {loadDatetime(created_at).toRelative()}
+                    <div
+                      className="meta"
+                      title={createdAt.toLocaleString(DateTime.DATETIME_FULL)}
+                    >
+                      {createdAt.toRelative()}
                     </div>
                   </div>
                   <div className="last_post">
                     <Link className="name" to={`/user/${last_author.slug}`}>
                       {last_author.name}
                     </Link>
-                    <div className="meta" title={updated_at}>
-                      {loadDatetime(updated_at).toRelative()}
+                    <div
+                      className="meta"
+                      title={updatedAt.toLocaleString(DateTime.DATETIME_FULL)}
+                    >
+                      {updatedAt.toRelative()}
                     </div>
                   </div>
                   <div className="posts">
                     {thread.comment_count.toLocaleString()}
                   </div>
                   {/* {user.id && (
-                    <div className="cmd">
-                      <img onClick={() => {}} src={addIcon} />
-                      <img onClick={() => {}} src={hideIcon} />
-                    </div>
-                  )} */}
+                      <div className="cmd">
+                        <img onClick={() => {}} src={addIcon} />
+                        <img onClick={() => {}} src={hideIcon} />
+                      </div>
+                    )} */}
                 </div>
-              );
-            })
-            .flatMap((x, i) => [x, <div key={`b${i}`} className="blueline" />])}
+                <div className="blueline" />
+              </Fragment>
+            );
+          })}
         </StyledThreads>
         {paging}
       </Content>

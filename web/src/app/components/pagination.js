@@ -7,7 +7,6 @@ const Pagination = ({ items, plural, cta, children, path = "" }) => {
   const { page = 1, perPage = 25, total = 0 } = items;
 
   const totalPages = Math.ceil(total / perPage);
-
   const setStart = page * perPage - perPage;
   const setEnd = Math.min(setStart + perPage, total);
 
@@ -72,7 +71,7 @@ const Pagination = ({ items, plural, cta, children, path = "" }) => {
 
 export default Pagination;
 
-const PaginationView = styled.div`
+export const PaginationView = styled.div`
   display: flex;
   flex-direction: row;
   align-items: center;

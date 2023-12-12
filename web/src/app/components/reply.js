@@ -8,7 +8,11 @@ import { TextEditor } from "./texteditor";
 import React, { useCallback, useRef } from "react";
 
 import { useRecoilValue, useRecoilState } from "recoil";
-import { threadState, commentsState, globalKeyState } from "../atoms";
+import {
+  threadState,
+  commentsState,
+  globalKeyState,
+} from "../atoms";
 import { useSetTitle, useErrorHandler } from "../utils";
 
 import closeImg from "url:/src/images/chrome/close.gif";
@@ -72,11 +76,13 @@ const NewPostNotifier = () => {
   );
 };
 
-export const Reply = () => {
+export const Reply = ({
+  textAtom,
+}) => {
   const { page } = useParams();
   const [thread, setThread] = useRecoilState(threadState);
   const [comments, setComments] = useRecoilState(commentsState);
-  const setText = useSetRecoilState(replyTextState);
+  const setText = useSetRecoilState(textAtom);
   const [errors, setErrors, handleApiError] = useErrorHandler("content");
   const [working, setWorking] = useState(false);
   const navigate = useNavigate();
@@ -88,6 +94,10 @@ export const Reply = () => {
         <img src={p09} />
       </div>
     );
+  }
+
+  if (!thread.id) {
+    return;
   }
 
   const onSend = (e) => {
@@ -117,7 +127,7 @@ export const Reply = () => {
   return (
     <>
       <form onSubmit={onSend} className="reply-form">
-        <TextEditor working={working} errors={errors} />
+        <TextEditor working={working} errors={errors} textAtom={textAtom} />
       </form>
 
       <NewPostNotifier />

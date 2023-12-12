@@ -2,15 +2,14 @@ from flask_marshmallow import Marshmallow
 from gather.models import (
     Applicant,
     Comment,
-    DirectComment,
-    DirectThread,
+    DirectMessage,
     RelationshipType,
     Thread,
     Title,
     User,
+    sqids,
 )
 from marshmallow import EXCLUDE, Schema, fields
-
 
 def decode_emojis(text):
     return text.replace("[&gt;|]", "[>|]").replace("[&gt;&lt;]", "[><]")
@@ -172,41 +171,25 @@ class RelationshipSchema(Schema):
 relationship_schema = RelationshipSchema()
 
 
-class DirectCommentSchema(Schema):
+
+class DirectMessageSchema(Schema):
     class Meta:
-        model = DirectComment
-        fields = (
-            "author",
-            "content",
-            "read",
-            "created_at",
-        )
-
-    author = ma.Nested(user_schema)
-    content = ma.Function(lambda obj: decode_emojis(obj.content))
-
-
-direct_comment_schema = DirectCommentSchema()
-direct_comments_schema = DirectCommentSchema(many=True)
-
-
-class DirectThreadSchema(Schema):
-    class Meta:
-        model = DirectThread
+        model = DirectMessage
         fields = (
             "slug",
             "title",
+            "content",
+            "encrypted",
             "author",
             "recipient",
-            "comments",
             "created_at",
-            "updated_at",
+            "created_at",
         )
 
+    slug = ma.Function(lambda obj: sqids.encode([obj.id]))
     author = ma.Nested(user_schema)
     recipient = ma.Nested(user_schema)
-    comments = ma.Nested("DirectCommentSchema", many=True)
+    content = ma.Function(lambda obj: decode_emojis(obj.content))
 
-
-direct_thread_schema = DirectThreadSchema()
-direct_threads_schema = DirectThreadSchema(many=True)
+direct_message_schema = DirectMessageSchema()
+direct_messages_schema = DirectMessageSchema(many=True)

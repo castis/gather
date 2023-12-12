@@ -29,6 +29,8 @@ openai = "*"
 gunicorn = "*"
 boto3 = "*"
 pytest = "*"
+cryptography = "*"
+sqids = "*"
 
 [dev-packages]
 

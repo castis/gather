@@ -1,7 +1,7 @@
 import React, { useState, useMemo, useEffect } from "react";
 import { useParams } from "react-router";
 import styled from "styled-components";
-import { Link, useSearchParams, Outlet } from "react-router-dom";
+import { Link } from "react-router-dom";
 
 import { api } from "../api";
 import { Stage, Title, Content, Skeleton, NotFound } from "../components/stage";
@@ -80,7 +80,7 @@ const User = () => {
                   {comment.thread_title}
                 </Link>
               </h3>
-              <Comment comment={comment} contentOnly={true} />
+              <Comment comment={comment} contentOnly />
             </div>
           ))}
         </div>

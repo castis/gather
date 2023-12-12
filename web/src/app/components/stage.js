@@ -99,6 +99,7 @@ export const Content = styled.div`
     height: 1px;
     width: 100%;
     background-color: #ace1f9;
+    box-sizing: content-box
   }
 
   form {

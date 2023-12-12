@@ -54,7 +54,7 @@ export const useErrorHandler = (defaultFieldName = "global") => {
 };
 
 export const loadDatetime = (ISO8601) =>
-  DateTime.fromISO(ISO8601, { zone: "UTC" });
+  DateTime.fromISO(ISO8601, { zone: "UTC" }).toLocal();
 
 const suffixes = ["th", "st", "nd", "rd"];
 export const ordinal = (num) => {
@@ -67,4 +67,12 @@ export const formatDate = (date) => {
   const d = new Date(date);
   const month = d.toLocaleString("default", { month: "long" });
   return `${month} ${ordinal(d.getDate())}, ${d.getFullYear()}`;
+};
+
+export const Checkbox = ({ indeterminate, ...rest }) => {
+  const ref = useRef();
+  useEffect(() => {
+    ref.current.indeterminate = indeterminate;
+  }, [ref, indeterminate]);
+  return <input type="checkbox" ref={ref} {...rest} />;
 };

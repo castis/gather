@@ -1,34 +1,42 @@
-import React, { useState, useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { useParams } from "react-router";
+import { Link } from "react-router-dom";
 import { api } from "../../api";
+import { PaginationView } from "../../components/pagination";
 import { Content, Stage, Title } from "../../components/stage";
 import { Comment } from "../thread";
+import { StyledContent, MessengerControls } from "./inbox";
+import { TextEditor } from "../../components/texteditor";
 
 const DirectMessage = () => {
   const { slug, page } = useParams();
-  const [thread, setThread] = useState({
+  const [message, setMessage] = useState({
     title: "",
+    content: "",
+    author: {},
   });
 
   useEffect(() => {
     api
       .post(`/messages/message`, { slug, page })
       .then(({ data }) => {
-        setThread(data);
+        console.log(data);
+        setMessage(data);
       })
       .catch(console.log);
   }, [slug, page]);
 
-  console.log(thread.comments);
-
   return (
     <Stage>
-      <Title>{thread.title}</Title>
-      <Content>
-        {thread.comments?.map((comment) => (
-          <Comment key={comment.id} comment={comment} />
-        ))}
-      </Content>
+      <Title>{message.title}</Title>
+      <StyledContent>
+        <PaginationView />
+        <MessengerControls />
+        <Comment key={message.id} comment={message} />
+        <form>
+          <TextEditor />
+        </form>
+      </StyledContent>
     </Stage>
   );
 };

@@ -1,24 +1,25 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
 // import { useParams } from "react-router";
-import { useSetRecoilState } from "recoil";
+import { useRecoilState, useSetRecoilState } from "recoil";
 import styled from "styled-components";
 import { Link, useNavigate } from "react-router-dom";
 
 import { api } from "../api";
 import { Stage, Title, Content } from "../components/stage";
 import { TextEditor } from "../components/texteditor";
-import { replyTextState } from "../atoms"
-
+import { textAtomFamily } from "../atoms";
+import { useErrorHandler } from "../utils";
 
 export default () => {
-  const setText = useSetRecoilState(replyTextState)
-  const [error, setError] = useState("");
+  // const textAtom = textAtomFamily("new-thread");
+  const [text, setText] = useRecoilState(textAtomFamily("new-thread"));
+  const [errors, setErrors, handleApiError] = useErrorHandler();
   const [working, setWorking] = useState(false);
   const navigate = useNavigate();
 
   const onSubmit = useCallback((e) => {
     e.preventDefault();
-    setError("");
+    setErrors("");
     setWorking(true);
 
     const form = Object.fromEntries(new FormData(e.target).entries());
@@ -26,17 +27,11 @@ export default () => {
     api
       .post("/threads", form)
       .then(({ data }) => {
-        navigate(`/thread/${data.thread.slug}`)
-        setText("")
+        navigate(`/thread/${data.thread.slug}`);
+        setText("");
       })
-      .catch(({ response }) => {
-        if (response?.data?.json?.content) {
-          setError(response.data.json.content);
-        } else {
-          setError("Something went wrong.");
-        }
-        setWorking(false);
-      });
+      .catch(handleApiError)
+      .finally(() => setWorking(false));
   });
 
   return (
@@ -94,6 +89,7 @@ export default () => {
                 <label htmlFor="meaningless">Meaningless</label>
               </div>
             </div>
+            {errors?.category && <div className="error">{errors.category}</div>}
           </div>
 
           <div className="step">
@@ -101,12 +97,18 @@ export default () => {
             <div className="field">
               <input type="text" name="title" />
             </div>
+            {errors?.title && <div className="error">{errors.title}</div>}
           </div>
 
           <div className="step">
             <h3>Step 3: Type the content of your thread</h3>
 
-            <TextEditor working={working} className="new-thread" />
+            <TextEditor
+              working={working}
+              // textAtom={textAtom}
+              textKey="new-thread"
+              errors={errors}
+            />
           </div>
         </StyledNewThreadForm>
       </Content>
@@ -145,7 +147,7 @@ const StyledNewThreadForm = styled.form`
       &:first-of-type {
         margin-left: 0;
       }
-  
+
       input {
         margin: 0 5px 0 0;
       }

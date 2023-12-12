@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import { useRecoilState, useRecoilValue } from "recoil";
 import styled from "styled-components";
-
-import { userState, replyTextState } from "../atoms";
+import { textAtomFamily } from "../atoms";
+import { userState } from "../atoms";
 import { api } from "../api";
 
 import p11 from "url:/src/images/pinkies/11.gif";
@@ -61,9 +61,11 @@ const shortcuts = {
   Snigger: ["<snigger />"],
 };
 
-export const TextEditor = ({ working, className, errors }) => {
+export const TextEditor = ({ working, className, errors, textKey }) => {
   const user = useRecoilValue(userState);
-  const [text, setText] = useRecoilState(replyTextState);
+  // console.log(textAtom)
+  const [text, setText] = useRecoilState(textAtomFamily(textKey));
+  // const [text, setText] = useState("")
   const [caret, setCaret] = useState(0);
   const textareaRef = useRef();
 
@@ -125,7 +127,9 @@ export const TextEditor = ({ working, className, errors }) => {
     }
   }, [window.location.hash, textareaRef?.current]);
 
-  const handleTextarea = useCallback((e) => setText(e.target.value));
+  const handleTextarea = useCallback((e) => {
+    setText(e.target.value);
+  });
 
   return (
     <StyledTextEditor className={className}>
@@ -295,7 +299,7 @@ const StyledTextEditor = styled.div`
         outline: none;
       }
     }
-    
+
     .error {
       color: #e95e6e;
       font-size: 10px;

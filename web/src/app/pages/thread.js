@@ -7,7 +7,14 @@ import styled from "styled-components";
 
 import { DateTime } from "luxon";
 import { api } from "../api";
-import { commentsState, globalKeyState, replyTextState, threadState, userState } from "../atoms";
+import {
+  commentsState,
+  globalKeyState,
+  replyTextState,
+  threadState,
+  userState,
+  textAtomFamily,
+} from "../atoms";
 import Pagination from "../components/pagination";
 import { Reply } from "../components/reply";
 import { Content, Error, Skeleton, Stage, Title } from "../components/stage";
@@ -51,9 +58,9 @@ const Thread = () => {
   const user = useRecoilValue(userState);
   const [thread, setThread] = useRecoilState(threadState);
   const [comments, setComments] = useRecoilState(commentsState);
-
   const [working, setWorking] = useState(true);
   const [errors, setErrors, handleApiError] = useErrorHandler();
+  const textAtom = textAtomFamily(`thread-${thread.id}`);
 
   useSetTitle((p) => `${p} - ${thread.title}`);
 
@@ -124,7 +131,7 @@ const Thread = () => {
         </div>
         {paging}
 
-        <Reply />
+        <Reply textAtom={textAtom} />
       </StyledThread>
     </Stage>
   );
@@ -318,7 +325,7 @@ const Admin = () => {
 
 export const Comment = ({ comment, contentOnly = false }) => {
   const user = useRecoilValue(userState);
-  const setReplyText = useSetRecoilState(replyTextState);
+  const setReplyText = () => {}//useSetRecoilState(replyTextState);
   const [selection, setSelection] = useState("");
   const [viewingSource, setViewingSource] = useState(false);
 
@@ -384,7 +391,10 @@ export const Comment = ({ comment, contentOnly = false }) => {
         <Link className="name" to={`/user/${author.slug}`}>
           {author.name}
         </Link>
-        <div className="when" title={createdAt.toLocaleString(DateTime.DATETIME_FULL)}>
+        <div
+          className="when"
+          title={createdAt.toLocaleString(DateTime.DATETIME_FULL)}
+        >
           {createdAt.toRelative()}
         </div>
         <div className="menu">

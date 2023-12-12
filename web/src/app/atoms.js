@@ -1,13 +1,22 @@
-import { atom } from "recoil";
+import { useMemo } from "react";
+import { atom, atomFamily, selectorFamily } from "recoil";
 
 export const workingState = atom({
   key: "working",
   default: false,
 });
 
-export const replyTextState = atom({
-  key: "replyText",
-  default: "",
+export const textAtomFamily = atomFamily({
+  key: "text-editor",
+  default: (key) => localStorage.getItem(key) || "",
+  effects: [
+    ({ onSet, ...rest }) => {
+      onSet((newValue, b, c) => {
+        console.log(rest, newValue, b, c)
+        // localStorage.setItem(key, newValue);
+      });
+    },
+  ],
 });
 
 export const globalKeyState = atom({
