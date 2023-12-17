@@ -26,6 +26,19 @@ const DirectMessage = () => {
       .catch(console.log);
   }, [slug, page]);
 
+  const onSubmit = (e) => {
+    e.preventDefault();
+    const form = Object.fromEntries(new FormData(e.target).entries());
+    form.slug = thread.slug;
+    api
+      .post(`/messages/message`, { slug, page, content })
+      .then(({ data }) => {
+        console.log(data);
+        setMessage(data);
+      })
+      .catch(console.log);
+  }
+
   return (
     <Stage>
       <Title>{message.title}</Title>
@@ -33,7 +46,7 @@ const DirectMessage = () => {
         <PaginationView />
         <MessengerControls />
         <Comment key={message.id} comment={message} />
-        <form>
+        <form onSubmit={onSubmit}>
           <TextEditor />
         </form>
       </StyledContent>
