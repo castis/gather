@@ -42,10 +42,3 @@ def test_email():
     from gather.mail import send
 
     send("castis@duckbo.at", "test subject", "test content goes here")
-
-
-@bp.cli.command("yh3")
-def test_yh3():
-    from gather.legacy.services import YH3
-
-    YH3().send_message("castis", "test subject", "test content goes here")
